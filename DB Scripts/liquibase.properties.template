@@ -1,0 +1,80 @@
+# Liquibase Properties Template
+# Copy this file to liquibase.properties and update with your actual credentials
+# DO NOT commit liquibase.properties with real credentials to version control
+
+# ====================================
+# Database Connection
+# ====================================
+
+changeLogFile=liquibase-changelog.xml
+
+# ====================================
+# MySQL Configuration (Default)
+# ====================================
+driver=com.mysql.cj.jdbc.Driver
+url=jdbc:mysql://localhost:3306/alhilo_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+username=YOUR_USERNAME_HERE
+password=YOUR_PASSWORD_HERE
+
+# ====================================
+# PostgreSQL Configuration (Alternative)
+# Uncomment and update if using PostgreSQL
+# ====================================
+# driver=org.postgresql.Driver
+# url=jdbc:postgresql://localhost:5432/alhilo_db
+# username=YOUR_USERNAME_HERE
+# password=YOUR_PASSWORD_HERE
+
+# ====================================
+# Docker Configuration
+# If using docker-compose.yml from this directory
+# ====================================
+# MySQL via Docker
+# username=alhilo
+# password=alhilo123
+
+# PostgreSQL via Docker
+# username=alhilo
+# password=alhilo123
+
+# ====================================
+# Liquibase Settings
+# ====================================
+liquibase.hub.mode=off
+liquibase.showSummary=SUMMARY
+liquibase.showSummaryOutput=CONSOLE
+
+# Logging level: OFF, SEVERE, WARNING, INFO, FINE
+logLevel=INFO
+
+# ====================================
+# Advanced Options (Optional)
+# ====================================
+
+# Default schema name (if needed)
+# defaultSchemaName=public
+
+# Contexts for environment-specific changes
+# contexts=dev,test,prod
+
+# Labels for selective deployment
+# labels=v1.0
+
+# Output SQL to file for review (before applying)
+# outputFile=migration-output.sql
+
+# Changelog parameters (if using properties in changelog)
+# property.database.name=alhilo_db
+# property.database.version=1.0
+
+# ====================================
+# Security Notes
+# ====================================
+# 1. Never commit real credentials to version control
+# 2. Use environment variables in CI/CD:
+#    - LIQUIBASE_COMMAND_URL
+#    - LIQUIBASE_COMMAND_USERNAME
+#    - LIQUIBASE_COMMAND_PASSWORD
+# 3. Restrict file permissions: chmod 600 liquibase.properties
+# 4. Use read-only accounts for status/validation
+# 5. Use specific accounts with minimal privileges

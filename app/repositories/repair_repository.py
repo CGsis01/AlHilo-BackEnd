@@ -1,0 +1,86 @@
+from typing import List, Optional
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload, selectinload
+from uuid import UUID
+from app.models.repair import Repair
+from app.models.repair_item import RepairItem
+from app.repositories.base import BaseRepository
+
+class RepairRepository(BaseRepository[Repair]):
+    def __init__(self, db: AsyncSession):
+        super().__init__(Repair, db)
+
+    def _query_with_relations(self):
+        return (
+            select(Repair).options(
+                joinedload(Repair.repair_status),
+                joinedload(Repair.assigned_to),
+                joinedload(Repair.created_by_user),
+                selectinload(Repair.repair_items).joinedload(RepairItem.repair_type),
+            )
+        )
+
+    async def get_by_id(self, id: UUID) -> Optional[Repair]:
+        result = await self.db.execute(
+            self._query_with_relations().filter(Repair.id == id))
+
+        return result.scalar_one_or_none()
+
+    async def get_all_filtered(self, filters: Optional[dict] = None) -> List[Repair]:
+        query = self._query_with_relations()
+        
+        if filters:
+            for field, value in filters.items():
+                if value is not None:
+                    query = query.filter(getattr(Repair, field) == value)
+        
+        result = await self.db.execute(query)
+
+        return list(result.scalars().all())
+
+    async def create(self, obj_in: dict) -> Repair:
+        db_obj = Repair(**obj_in)
+
+        self.db.add(db_obj)
+        
+        await self.db.flush()
+        
+        repair_id = db_obj.id
+
+        await self.db.commit()
+
+        result = await self.db.execute(
+            self._query_with_relations().filter(Repair.id == repair_id))
+
+        return result.scalar_one()
+    
+    async def update(self, id: UUID, obj_in: dict) -> Optional[Repair]:
+        result = await self.db.execute(select(self.model).filter(self.model.id == id))
+
+        db_obj = result.scalar_one_or_none()
+        
+        if db_obj:
+            for field, value in obj_in.items():
+                if value is not None:
+                    setattr(db_obj, field, value)
+        
+            await self.db.commit()
+            await self.db.refresh(db_obj)
+        
+        result = await self.db.execute(
+            self._query_with_relations().filter(Repair.id == id))
+
+        return result.scalar_one()
+
+    async def get_by_client(self, client_id: UUID) -> List[Repair]:
+        result = await self.db.execute(
+            self._query_with_relations().filter(Repair.client_id == client_id))
+        
+        return list(result.scalars().all())
+    
+    async def get_by_status(self, status_id: UUID) -> List[Repair]:
+        result = await self.db.execute(
+            self._query_with_relations().filter(Repair.repair_status_id == status_id))
+        
+        return list(result.scalars().all())
