@@ -58,6 +58,7 @@ async def get_current_user_info(
 async def get_users(
     role_id: Optional[UUID] = Query(None, description="Filter by role ID"),
     role_code: Optional[str] = Query(None, description="Filter by role code"),
+    role_codes: Optional[List[str]] = Query(None, description="Filter by role codes"),
     is_active: Optional[bool] = Query(None, description="Filter by active status"),
     search: Optional[str] = Query(None, description="Search by name or email"),
     db: AsyncSession = Depends(get_db),
@@ -67,6 +68,7 @@ async def get_users(
     filters = UserFilters(
         role_id=role_id,
         role_code=role_code,
+        role_codes=role_codes,
         is_active=is_active,
         search=search
     )

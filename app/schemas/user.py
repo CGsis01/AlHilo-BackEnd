@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
 
@@ -8,6 +8,7 @@ from app.schemas.role import RoleResponse
 class UserFilters(BaseModel):
     role_id: Optional[UUID] = None
     role_code: Optional[str] = None
+    role_codes: Optional[List[str]] = None
     is_active: Optional[bool] = None
     search: Optional[str] = None
 

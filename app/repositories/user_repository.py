@@ -41,6 +41,9 @@ class UserRepository(BaseRepository[User]):
             if filters.role_code is not None:
                 query = query.filter(Role.code == filters.role_code)
             
+            if filters.role_codes is not None:
+                query = query.filter(Role.code.in_(filters.role_codes))
+            
             if filters.is_active is not None:
                 query = query.filter(User.is_active == filters.is_active)
             

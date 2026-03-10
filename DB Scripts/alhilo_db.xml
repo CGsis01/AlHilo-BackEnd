@@ -472,6 +472,12 @@
 
         <insert tableName="roles">
             <column name="role_id" valueComputed="uuid_generate_v4()"/>
+            <column name="name" value="Jefa de Costura"/>
+            <column name="code" value="HeadSewing"/>
+        </insert>
+
+        <insert tableName="roles">
+            <column name="role_id" valueComputed="uuid_generate_v4()"/>
             <column name="name" value="Costurera"/>
             <column name="code" value="Seamstress"/>
         </insert>
@@ -494,6 +500,16 @@
             <column name="password_hash" value="$2a$12$8RigaTSuBjOAcHMdhzEfreYWTVXXkpJ.fUOOH1xehptQLp0v0uVOS"/>
             <!-- Password: recep123 - Should be changed in production -->
             <column name="role_id" valueComputed="(SELECT role_id FROM roles WHERE name='Recepcionista')"/>
+        </insert>
+
+        <!-- Head Sewing User -->
+        <insert tableName="users">
+            <column name="user_id" valueComputed="uuid_generate_v4()"/>
+            <column name="name" value="Karla Rodríguez"/>
+            <column name="email" value="jefa.costura@alhilo.com"/>
+            <column name="password_hash" value="$2a$12$i/V7qsTjhv2E2x2MERxp6O.TjUQCt9/CBoTgCrT7lqg5nhbDTqunK"/>
+            <!-- Password: jefa123 - Should be changed in production -->
+            <column name="role_id" valueComputed="(SELECT role_id FROM roles WHERE name='Jefa de Costura')"/>
         </insert>
 
         <!-- Seamstress User -->
