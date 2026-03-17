@@ -4,6 +4,7 @@ from sqlalchemy import select, or_
 from uuid import UUID
 from app.models.user import User
 from app.models.role import Role
+from app.models.store import Store
 from app.repositories.base import BaseRepository
 from app.schemas.user import UserFilters
 
@@ -13,7 +14,8 @@ class UserRepository(BaseRepository[User]):
         super().__init__(User, db)
     
     async def get_by_email(self, email: str) -> Optional[User]:
-        result = await self.db.execute(select(User).filter(User.email == email))
+        query = select(User).filter(User.email == email)
+        result = await self.db.execute(query)
         
         return result.scalar_one_or_none()
 
@@ -32,7 +34,7 @@ class UserRepository(BaseRepository[User]):
     
     async def get_all_filtered(self, filters: Optional[UserFilters] = None) -> List[User]:
         """Get all users with optional filters"""
-        query = select(User).join(Role, User.role_id == Role.id)
+        query = select(User).join(Role, User.role_id == Role.id).join(Store, User.store_id == Store.id)
         
         if filters:
             if filters.role_id is not None:

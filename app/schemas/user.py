@@ -4,6 +4,7 @@ from datetime import datetime
 from uuid import UUID
 
 from app.schemas.role import RoleResponse
+from app.schemas.store import StoreResponse
 
 class UserFilters(BaseModel):
     role_id: Optional[UUID] = None
@@ -30,6 +31,7 @@ class UserUpdate(BaseModel):
 class UserResponse(UserBase):
     id: UUID
     role: RoleResponse
+    store: Optional[StoreResponse] = None
     is_active: bool
     created_at: datetime
     updated_at: datetime

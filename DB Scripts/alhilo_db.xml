@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<databaseChangeLog
-    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
@@ -21,9 +20,39 @@
     </changeSet>
 
     <!-- ========================================== -->
-    <!-- CHANGESET 2: Create Roles Table            -->
+    <!-- CHANGESET 2: Create Stores Table           -->
     <!-- ========================================== -->
     <changeSet id="C002" author="CIOC">
+        <comment>Create stores table</comment>
+        <createTable tableName="stores">
+            <column name="store_id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="address" type="VARCHAR(255)"/>
+            <column name="phone" type="VARCHAR(20)"/>
+            <column name="email" type="VARCHAR(255)"/>
+            <column name="rfc" type="VARCHAR(20)"/>
+            <column name="url" type="VARCHAR(255)"/>
+            <column name="logo" type="VARCHAR(255)"/>
+            <column name="is_active" type="BOOLEAN" defaultValue="true"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()"/>
+            <column name="created_by" type="UUID"/>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()"/>
+            <column name="updated_by" type="UUID"/>
+        </createTable>
+
+        <rollback>
+            <dropTable tableName="stores"/>
+        </rollback>
+    </changeSet>
+
+    <!-- ========================================== -->
+    <!-- CHANGESET 3: Create Roles Table            -->
+    <!-- ========================================== -->
+    <changeSet id="C003" author="CIOC">
         <comment>Create roles table</comment>
         <createTable tableName="roles">
             <column name="role_id" type="UUID" defaultValueComputed="uuid_generate_v4()">
@@ -46,9 +75,9 @@
     </changeSet>
 
     <!-- ========================================== -->
-    <!-- CHANGESET 3: Create Users Table            -->
+    <!-- CHANGESET 4: Create Users Table            -->
     <!-- ========================================== -->
-    <changeSet id="C003" author="CIOC">
+    <changeSet id="C004" author="CIOC">
         <comment>Create users table</comment>
         <createTable tableName="users">
             <column name="user_id" type="UUID" defaultValueComputed="uuid_generate_v4()">
@@ -66,6 +95,7 @@
             <column name="role_id" type="UUID">
                 <constraints nullable="false"/>
             </column>
+            <column name="store_id" type="UUID"/>
             <column name="is_active" type="BOOLEAN" defaultValue="true"/>
             <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()"/>
             <column name="created_by" type="UUID"/>
@@ -82,6 +112,15 @@
             onDelete="RESTRICT"
             onUpdate="NO ACTION"/>
 
+        <addForeignKeyConstraint 
+            baseTableName="users"
+            baseColumnNames="store_id"
+            referencedTableName="stores"
+            referencedColumnNames="store_id"
+            constraintName="fk_users_store"
+            onDelete="RESTRICT"
+            onUpdate="NO ACTION"/>
+
         <createIndex indexName="idx_users_email" tableName="users">
             <column name="email"/>
         </createIndex>
@@ -94,15 +133,19 @@
             <column name="is_active"/>
         </createIndex>
 
+        <createIndex indexName="idx_users_store" tableName="users">
+            <column name="store_id"/>
+        </createIndex>
+
         <rollback>
             <dropTable tableName="users"/>
         </rollback>
     </changeSet>
 
     <!-- ========================================== -->
-    <!-- CHANGESET 4: Create Clients Table          -->
+    <!-- CHANGESET 5: Create Clients Table          -->
     <!-- ========================================== -->
-    <changeSet id="C004" author="CIOC">
+    <changeSet id="C005" author="CIOC">
         <comment>Create clients table</comment>
         <createTable tableName="clients">
             <column name="client_id" type="UUID" defaultValueComputed="uuid_generate_v4()">
@@ -132,6 +175,7 @@
             <column name="birth_date" type="DATE">
                 <constraints nullable="true"/>
             </column>
+            <column name="store_id" type="UUID"/>
             <column name="is_active" type="BOOLEAN" defaultValue="true"/>
             <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()"/>
             <column name="created_by" type="UUID"/>
@@ -155,15 +199,78 @@
             <column name="email"/>
         </createIndex>
 
+        <createIndex indexName="idx_clients_store" tableName="clients">
+            <column name="store_id"/>
+        </createIndex>
+
+        <addForeignKeyConstraint 
+            baseTableName="clients"
+            baseColumnNames="store_id"
+            referencedTableName="stores"
+            referencedColumnNames="store_id"
+            constraintName="fk_clients_store"
+            onDelete="RESTRICT"
+            onUpdate="NO ACTION"/>
+
         <rollback>
             <dropTable tableName="clients"/>
         </rollback>
     </changeSet>
 
     <!-- ========================================== -->
-    <!-- CHANGESET 5: Create Repair Types Table     -->
+    <!-- CHANGESET 6: Repair Complexities           -->
     <!-- ========================================== -->
-    <changeSet id="C005" author="CIOC">
+    <changeSet id="C006" author="CIOC">
+        <comment>Create repair type complexities table</comment>
+        <createTable tableName="repair_complexities">
+            <column name="repair_complexity_id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="code" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="labor_multiplier" type="DECIMAL(5,2)" defaultValue="1.00">
+                <constraints nullable="false"/>
+            </column>
+            <column name="time_multiplier" type="DECIMAL(5,2)" defaultValue="1.00">
+                <constraints nullable="false"/>
+            </column>
+            <column name="price_multiplier" type="DECIMAL(5,2)" defaultValue="1.00">
+                <constraints nullable="false"/>
+            </column>
+            <column name="store_id" type="UUID"/>
+            <column name="is_active" type="BOOLEAN" defaultValue="true"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()"/>
+            <column name="created_by" type="UUID"/>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()"/>
+            <column name="updated_by" type="UUID"/>
+        </createTable>
+
+        <createIndex indexName="idx_repair_complexity_store" tableName="repair_complexities">
+            <column name="store_id"/>
+        </createIndex>
+
+        <addForeignKeyConstraint 
+            baseTableName="repair_complexities"
+            baseColumnNames="store_id"
+            referencedTableName="stores"
+            referencedColumnNames="store_id"
+            constraintName="fk_repair_complexity_store"
+            onDelete="RESTRICT"
+            onUpdate="NO ACTION"/>
+
+        <rollback>
+            <dropTable tableName="repair_complexities"/>
+        </rollback>
+    </changeSet>
+
+    <!-- ========================================== -->
+    <!-- CHANGESET 7: Create Repair Types Table     -->
+    <!-- ========================================== -->
+    <changeSet id="C007" author="CIOC">
         <comment>Create repair types table</comment>
         <createTable tableName="repair_types">
             <column name="repair_type_id" type="UUID" defaultValueComputed="uuid_generate_v4()">
@@ -178,6 +285,10 @@
             </column>
             <column name="estimated_time" type="INTEGER"/>
             <column name="commission_percentage" type="DECIMAL(10,2)"/>
+            <column name="repair_complexity_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="store_id" type="UUID"/>
             <column name="is_active" type="BOOLEAN" defaultValue="true"/>
             <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()"/>
             <column name="created_by" type="UUID"/>
@@ -185,15 +296,149 @@
             <column name="updated_by" type="UUID"/>
         </createTable>
 
+        <createIndex indexName="idx_repair_types_complexity" tableName="repair_types">
+            <column name="repair_complexity_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_repair_types_store" tableName="repair_types">
+            <column name="store_id"/>
+        </createIndex>
+
+        <addForeignKeyConstraint 
+            baseTableName="repair_types"
+            baseColumnNames="repair_complexity_id"
+            referencedTableName="repair_complexities"
+            referencedColumnNames="repair_complexity_id"
+            constraintName="fk_repair_types_complexity"
+            onDelete="RESTRICT"
+            onUpdate="NO ACTION"/>
+
+        <addForeignKeyConstraint 
+            baseTableName="repair_types"
+            baseColumnNames="store_id"
+            referencedTableName="stores"
+            referencedColumnNames="store_id"
+            constraintName="fk_repair_types_store"
+            onDelete="RESTRICT"
+            onUpdate="NO ACTION"/>
+
         <rollback>
             <dropTable tableName="repair_types"/>
         </rollback>
     </changeSet>
 
     <!-- ========================================== -->
-    <!-- CHANGESET 6: Create Repair Status Table    -->
+    <!-- CHANGESET 8: Materials                     -->
     <!-- ========================================== -->
-    <changeSet id="C006" author="CIOC">
+    <changeSet id="C008" author="CIOC">
+        <comment>Create materials catalog</comment>
+        <createTable tableName="materials">
+            <column name="material_id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="unit" type="VARCHAR(25)"/>
+            <column name="unit_cost" type="DECIMAL(10,2)" defaultValue="0.00">
+                <constraints nullable="false"/>
+            </column>
+            <column name="store_id" type="UUID"/>
+            <column name="is_active" type="BOOLEAN" defaultValue="true"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()"/>
+            <column name="created_by" type="UUID"/>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()"/>
+            <column name="updated_by" type="UUID"/>
+        </createTable>
+
+        <createIndex indexName="idx_materials_name" tableName="materials">
+            <column name="name"/>
+        </createIndex>
+
+        <createIndex indexName="idx_materials_store" tableName="materials">
+            <column name="store_id"/>
+        </createIndex>
+
+        <addForeignKeyConstraint 
+            baseTableName="materials"
+            baseColumnNames="store_id"
+            referencedTableName="stores"
+            referencedColumnNames="store_id"
+            constraintName="fk_materials_store"
+            onDelete="RESTRICT"
+            onUpdate="NO ACTION"/>
+
+        <rollback>
+            <dropTable tableName="materials"/>
+        </rollback>
+    </changeSet>
+
+    <!-- ========================================== -->
+    <!-- CHANGESET 9: Repair Type Materials         -->
+    <!-- ========================================== -->
+    <changeSet id="C009" author="CIOC">
+        <comment>Map materials to repair types</comment>
+
+        <createTable tableName="repair_type_materials">
+            <column name="repair_type_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="material_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quantity" type="DECIMAL(10,2)" defaultValue="1.00">
+                <constraints nullable="false"/>
+            </column>
+            <column name="unit_cost_override" type="DECIMAL(10,2)"/>
+            <column name="is_optional" type="BOOLEAN" defaultValue="false"/>
+            <column name="sort_order" type="INTEGER"/>
+            <column name="store_id" type="UUID"/>
+            <column name="is_active" type="BOOLEAN" defaultValue="true"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()"/>
+            <column name="created_by" type="UUID"/>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()"/>
+            <column name="updated_by" type="UUID"/>
+        </createTable>
+
+        <addPrimaryKey tableName="repair_type_materials" 
+            columnNames="repair_type_id, material_id,store_id" 
+            constraintName="pk_repair_type_materials"/>
+
+        <addForeignKeyConstraint 
+            baseTableName="repair_type_materials"
+            baseColumnNames="repair_type_id"
+            referencedTableName="repair_types"
+            referencedColumnNames="repair_type_id"
+            constraintName="fk_repair_type_materials_repair_type_id"
+            onDelete="RESTRICT"
+            onUpdate="NO ACTION"/>
+
+        <addForeignKeyConstraint 
+            baseTableName="repair_type_materials"
+            baseColumnNames="material_id"
+            referencedTableName="materials"
+            referencedColumnNames="material_id"
+            constraintName="fk_repair_type_materials_material_id"
+            onDelete="RESTRICT"
+            onUpdate="NO ACTION"/>
+
+        <createIndex indexName="idx_repair_type_materials_material" tableName="repair_type_materials">
+            <column name="material_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_repair_type_materials_store" tableName="repair_type_materials">
+            <column name="store_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="repair_type_materials"/>
+        </rollback>
+    </changeSet>
+
+    <!-- ========================================== -->
+    <!-- CHANGESET 10: Create Repair Status Table   -->
+    <!-- ========================================== -->
+    <changeSet id="C010" author="CIOC">
         <comment>Create repair status table</comment>
         <createTable tableName="repair_status">
             <column name="repair_status_id" type="UUID" defaultValueComputed="uuid_generate_v4()">
@@ -215,9 +460,9 @@
     </changeSet>
 
     <!-- ========================================== -->
-    <!-- CHANGESET 7: Create Repairs Table          -->
+    <!-- CHANGESET 11: Create Repairs Table         -->
     <!-- ========================================== -->
-    <changeSet id="C007" author="CIOC">
+    <changeSet id="C011" author="CIOC">
         <comment>Create repairs table</comment>
         <createTable tableName="repairs">
             <column name="repair_id" type="UUID" defaultValueComputed="uuid_generate_v4()">
@@ -251,6 +496,7 @@
             <column name="actual_delivery_date" type="TIMESTAMP WITH TIME ZONE"/>
             <column name="notes" type="TEXT"/>
             <column name="is_express" type="BOOLEAN" defaultValue="false"/>
+            <column name="store_id" type="UUID"/>
             <column name="is_active" type="BOOLEAN" defaultValue="true"/>
             <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()"/>
             <column name="created_by" type="UUID"/>
@@ -282,6 +528,15 @@
             referencedTableName="users"
             referencedColumnNames="user_id"
             constraintName="fk_repairs_assigned_to_id"
+            onDelete="RESTRICT"
+            onUpdate="NO ACTION"/>
+
+        <addForeignKeyConstraint 
+            baseTableName="repairs"
+            baseColumnNames="store_id"
+            referencedTableName="stores"
+            referencedColumnNames="store_id"
+            constraintName="fk_repairs_store"
             onDelete="RESTRICT"
             onUpdate="NO ACTION"/>
 
@@ -317,15 +572,19 @@
             <column name="estimated_delivery_date"/>
         </createIndex>
 
+        <createIndex indexName="idx_repairs_store" tableName="repairs">
+            <column name="store_id"/>
+        </createIndex>
+
         <rollback>
             <dropTable tableName="repairs"/>
         </rollback>
     </changeSet>
 
     <!-- ========================================== -->
-    <!-- CHANGESET 8: Create Repair Items Table     -->
+    <!-- CHANGESET 12: Create Repair Items Table    -->
     <!-- ========================================== -->
-    <changeSet id="C008" author="CIOC">
+    <changeSet id="C012" author="CIOC">
         <comment>Create repair items table</comment>
         <createTable tableName="repair_items">
             <column name="repair_item_id" type="UUID" defaultValueComputed="uuid_generate_v4()">
@@ -346,6 +605,7 @@
             <column name="price" type="DECIMAL(10,2)">
                 <constraints nullable="false"/>
             </column>
+            <column name="store_id" type="UUID"/>
             <column name="is_active" type="BOOLEAN" defaultValue="true"/>
             <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()"/>
             <column name="created_by" type="UUID"/>
@@ -362,16 +622,29 @@
             onDelete="RESTRICT"
             onUpdate="NO ACTION"/>
 
+        <addForeignKeyConstraint 
+            baseTableName="repair_items"
+            baseColumnNames="store_id"
+            referencedTableName="stores"
+            referencedColumnNames="store_id"
+            constraintName="fk_repair_item_store"
+            onDelete="RESTRICT"
+            onUpdate="NO ACTION"/>
+
         <createIndex indexName="idx_repair_item_repair_type" tableName="repair_items">
             <column name="repair_type_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_repair_item_store" tableName="repair_items">
+            <column name="store_id"/>
         </createIndex>
 
     </changeSet>
 
     <!-- ========================================== -->
-    <!-- CHANGESET 9: Create Payment Types Table    -->
+    <!-- CHANGESET 13: Create Payment Types Table   -->
     <!-- ========================================== -->
-    <changeSet id="C009" author="CIOC">
+    <changeSet id="C013" author="CIOC">
         <comment>Create payment types table</comment>
         <createTable tableName="payment_types">
             <column name="payment_type_id" type="UUID" defaultValueComputed="uuid_generate_v4()">
@@ -392,9 +665,9 @@
     </changeSet>
 
     <!-- ========================================== -->
-    <!-- CHANGESET 10: Create Payments Table        -->
+    <!-- CHANGESET 14: Create Payments Table        -->
     <!-- ========================================== -->
-    <changeSet id="C010" author="CIOC">
+    <changeSet id="C014" author="CIOC">
         <comment>Create payments table</comment>
         <createTable tableName="payments">
             <column name="payment_id" type="UUID" defaultValueComputed="uuid_generate_v4()">
@@ -416,6 +689,7 @@
             <column name="is_advance" type="BOOLEAN" defaultValue="false">
                 <constraints nullable="false"/>
             </column>
+            <column name="store_id" type="UUID"/>
             <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()"/>
             <column name="created_by" type="UUID"/>
         </createTable>
@@ -438,6 +712,15 @@
             onDelete="RESTRICT"
             onUpdate="NO ACTION"/>
 
+        <addForeignKeyConstraint 
+            baseTableName="payments"
+            baseColumnNames="store_id"
+            referencedTableName="stores"
+            referencedColumnNames="store_id"
+            constraintName="fk_payments_store"
+            onDelete="RESTRICT"
+            onUpdate="NO ACTION"/>
+
         <createIndex indexName="idx_payment_repair" tableName="payments">
             <column name="repair_id"/>
         </createIndex>
@@ -446,18 +729,35 @@
             <column name="payment_type_id"/>
         </createIndex>
 
+        <createIndex indexName="idx_payment_store" tableName="payments">
+            <column name="store_id"/>
+        </createIndex>
+
         <rollback>
             <dropTable tableName="payments"/>
         </rollback>
     </changeSet>
 
     <!-- ========================================== -->
-    <!-- CHANGESET 11: Seed Initial Users           -->
+    <!-- CHANGESET 15: Seed Initial Users           -->
     <!-- ========================================== -->
-    <changeSet id="C011" author="CIOC">
+    <changeSet id="C015" author="CIOC">
         <comment>Insert default data for system initialization</comment>
-        
+
+        <!-- Stores -->
+        <insert tableName="stores">
+            <column name="store_id" valueComputed="uuid_generate_v4()"/>
+            <column name="name" value="Al Hilo"/>
+            <column name="address" value="La Alhambra, Antiguo Camino a Villa de Santiago, Granja Postal, Monterrey, N.L."/>
+        </insert>
+
         <!-- Roles -->
+        <insert tableName="roles">
+            <column name="role_id" valueComputed="uuid_generate_v4()"/>
+            <column name="name" value="Super Administrador"/>
+            <column name="code" value="SuperAdmin"/>
+        </insert>
+
         <insert tableName="roles">
             <column name="role_id" valueComputed="uuid_generate_v4()"/>
             <column name="name" value="Administrador"/>
@@ -482,14 +782,25 @@
             <column name="code" value="Seamstress"/>
         </insert>
 
+        <!-- Super Administrator User -->
+        <insert tableName="users">
+            <column name="user_id" valueComputed="uuid_generate_v4()"/>
+            <column name="name" value="Super Administrador"/>
+            <column name="email" value="super.admin@alhilo.com"/>
+            <column name="password_hash" value="$2a$12$ytGsaZtzB1NZocLVDCf19uJOjyy3sNDjSlVAMeBbyt.BdTZUdACvi"/>
+            <!-- Password: super123 - Should be changed in production -->
+            <column name="role_id" valueComputed="(SELECT role_id FROM roles WHERE name='Super Administrador')"/>
+        </insert>
+
         <!-- Administrator User -->
         <insert tableName="users">
             <column name="user_id" valueComputed="uuid_generate_v4()"/>
-            <column name="name" value="Admin User"/>
+            <column name="name" value="Regina Chaires"/>
             <column name="email" value="admin@alhilo.com"/>
             <column name="password_hash" value="$2a$12$tg9WbivVX5F8Q.E7ZmKCoOFrnFe0qUCrmJRzS.rF8G4rywo5eRBsK"/>
             <!-- Password: admin123 - Should be changed in production -->
             <column name="role_id" valueComputed="(SELECT role_id FROM roles WHERE name='Administrador')"/>
+            <column name="store_id" valueComputed="(SELECT store_id FROM stores)"/>
         </insert>
 
         <!-- Receptionist User -->
@@ -500,6 +811,7 @@
             <column name="password_hash" value="$2a$12$8RigaTSuBjOAcHMdhzEfreYWTVXXkpJ.fUOOH1xehptQLp0v0uVOS"/>
             <!-- Password: recep123 - Should be changed in production -->
             <column name="role_id" valueComputed="(SELECT role_id FROM roles WHERE name='Recepcionista')"/>
+            <column name="store_id" valueComputed="(SELECT store_id FROM stores)"/>
         </insert>
 
         <!-- Head Sewing User -->
@@ -510,6 +822,7 @@
             <column name="password_hash" value="$2a$12$i/V7qsTjhv2E2x2MERxp6O.TjUQCt9/CBoTgCrT7lqg5nhbDTqunK"/>
             <!-- Password: jefa123 - Should be changed in production -->
             <column name="role_id" valueComputed="(SELECT role_id FROM roles WHERE name='Jefa de Costura')"/>
+            <column name="store_id" valueComputed="(SELECT store_id FROM stores)"/>
         </insert>
 
         <!-- Seamstress User -->
@@ -520,6 +833,7 @@
             <column name="password_hash" value="$2a$12$oSerpKFaViG/ptEG5.HgF.5lLEaG.VjXYbK9dcIZy8s6yLbR9xG8C"/>
             <!-- Password: seam123 - Should be changed in production -->
             <column name="role_id" valueComputed="(SELECT role_id FROM roles WHERE name='Costurera')"/>
+            <column name="store_id" valueComputed="(SELECT store_id FROM stores)"/>
         </insert>
 
         <!-- Repair Status -->
@@ -548,6 +862,34 @@
             <column name="name" value="Entregada"/>
         </insert>
 
+        <!-- Repair Complexities -->
+        <insert tableName="repair_complexities">
+            <column name="name" value="Fácil"/>
+            <column name="code" value="easy"/>
+            <column name="labor_multiplier" value="1.00"/>
+            <column name="time_multiplier" value="1.00"/>
+            <column name="price_multiplier" value="1.00"/>
+            <column name="store_id" valueComputed="(SELECT store_id FROM stores)"/>
+        </insert>
+
+        <insert tableName="repair_complexities">
+            <column name="name" value="Media"/>
+            <column name="code" value="medium"/>
+            <column name="labor_multiplier" value="1.00"/>
+            <column name="time_multiplier" value="1.00"/>
+            <column name="price_multiplier" value="1.00"/>
+            <column name="store_id" valueComputed="(SELECT store_id FROM stores)"/>
+        </insert>
+
+        <insert tableName="repair_complexities">
+            <column name="name" value="Difícil"/>
+            <column name="code" value="hard"/>
+            <column name="labor_multiplier" value="1.00"/>
+            <column name="time_multiplier" value="1.00"/>
+            <column name="price_multiplier" value="1.00"/>
+            <column name="store_id" valueComputed="(SELECT store_id FROM stores)"/>
+        </insert>
+
         <!-- Repair Types -->
         <insert tableName="repair_types">
             <column name="repair_type_id" valueComputed="uuid_generate_v4()"/>
@@ -556,6 +898,8 @@
             <column name="estimated_price" value="1.00"/>
             <column name="estimated_time" value="1"/>
             <column name="commission_percentage" value="5.00"/>
+            <column name="repair_complexity_id" valueComputed="(SELECT repair_complexity_id FROM repair_complexities WHERE code = 'medium')"/>
+            <column name="store_id" valueComputed="(SELECT store_id FROM stores)"/>
         </insert>
 
         <insert tableName="repair_types">
@@ -565,6 +909,8 @@
             <column name="estimated_price" value="1.00"/>
             <column name="estimated_time" value="1"/>
             <column name="commission_percentage" value="5.00"/>
+            <column name="repair_complexity_id" valueComputed="(SELECT repair_complexity_id FROM repair_complexities WHERE code = 'medium')"/>
+            <column name="store_id" valueComputed="(SELECT store_id FROM stores)"/>
         </insert>
 
         <insert tableName="repair_types">
@@ -574,6 +920,8 @@
             <column name="estimated_price" value="1.00"/>
             <column name="estimated_time" value="1"/>
             <column name="commission_percentage" value="5.00"/>
+            <column name="repair_complexity_id" valueComputed="(SELECT repair_complexity_id FROM repair_complexities WHERE code = 'medium')"/>
+            <column name="store_id" valueComputed="(SELECT store_id FROM stores)"/>
         </insert>
 
         <insert tableName="repair_types">
@@ -583,6 +931,8 @@
             <column name="estimated_price" value="1.00"/>
             <column name="estimated_time" value="1"/>
             <column name="commission_percentage" value="5.00"/>
+            <column name="repair_complexity_id" valueComputed="(SELECT repair_complexity_id FROM repair_complexities WHERE code = 'medium')"/>
+            <column name="store_id" valueComputed="(SELECT store_id FROM stores)"/>
         </insert>
 
         <insert tableName="repair_types">
@@ -592,6 +942,8 @@
             <column name="estimated_price" value="1.00"/>
             <column name="estimated_time" value="1"/>
             <column name="commission_percentage" value="5.00"/>
+            <column name="repair_complexity_id" valueComputed="(SELECT repair_complexity_id FROM repair_complexities WHERE code = 'medium')"/>
+            <column name="store_id" valueComputed="(SELECT store_id FROM stores)"/>
         </insert>
 
         <insert tableName="repair_types">
@@ -601,6 +953,8 @@
             <column name="estimated_price" value="1.00"/>
             <column name="estimated_time" value="1"/>
             <column name="commission_percentage" value="5.00"/>
+            <column name="repair_complexity_id" valueComputed="(SELECT repair_complexity_id FROM repair_complexities WHERE code = 'medium')"/>
+            <column name="store_id" valueComputed="(SELECT store_id FROM stores)"/>
         </insert>
 
         <insert tableName="repair_types">
@@ -610,6 +964,8 @@
             <column name="estimated_price" value="1.00"/>
             <column name="estimated_time" value="1"/>
             <column name="commission_percentage" value="5.00"/>
+            <column name="repair_complexity_id" valueComputed="(SELECT repair_complexity_id FROM repair_complexities WHERE code = 'medium')"/>
+            <column name="store_id" valueComputed="(SELECT store_id FROM stores)"/>
         </insert>
 
         <!-- Payment Types -->
@@ -626,18 +982,20 @@
         </insert>
 
         <rollback>
+            <delete tableName="stores"/>
             <delete tableName="roles"/>
             <delete tableName="users"/>
             <delete tableName="repair_status"/>
+            <delete tableName="repair_complexities"/>
             <delete tableName="repair_types"/>
             <delete tableName="payment_types"/>
         </rollback>
     </changeSet>
 
     <!-- ========================================== -->
-    <!-- CHANGESET 12: Create Audit Triggers        -->
+    <!-- CHANGESET 16: Create Audit Triggers        -->
     <!-- ========================================== -->
-    <changeSet id="C012" author="CIOC" dbms="postgresql">
+    <changeSet id="C016" author="CIOC" dbms="postgresql">
         <comment>Create triggers to automatically update updated_at timestamp</comment>
         
         <sql dbms="postgresql">
@@ -676,9 +1034,9 @@
     </changeSet>
 
     <!-- ========================================== -->
-    <!-- CHANGESET 13: Create Refresh Tokens Table  -->
+    <!-- CHANGESET 17: Create Refresh Tokens Table  -->
     <!-- ========================================== -->
-    <changeSet id="C013" author="CIOC">
+    <changeSet id="C017" author="CIOC">
         <comment>Table to store refresh tokens for authentication</comment>
         
         <createTable tableName="refresh_tokens">
@@ -728,155 +1086,6 @@
 
         <rollback>
             <dropTable tableName="refresh_tokens"/>
-        </rollback>
-    </changeSet>
-
-    <!-- ========================================== -->
-    <!-- CHANGESET 14: Create Audit Log Table       -->
-    <!-- ========================================== -->
-    <changeSet id="C014" author="CIOC">
-        <comment>Table to track important system events and changes</comment>
-        
-        <createTable tableName="audit_log">
-            <column name="audit_log_id" type="UUID" defaultValueComputed="uuid_generate_v4()">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="user_id" type="UUID">
-                <constraints nullable="true"/>
-            </column>
-            <column name="action" type="VARCHAR(50)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="entity_type" type="VARCHAR(50)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="entity_id" type="VARCHAR(36)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="old_values" type="TEXT">
-                <constraints nullable="true"/>
-            </column>
-            <column name="new_values" type="TEXT">
-                <constraints nullable="true"/>
-            </column>
-            <column name="ip_address" type="VARCHAR(45)">
-                <constraints nullable="true"/>
-            </column>
-            <column name="user_agent" type="VARCHAR(500)">
-                <constraints nullable="true"/>
-            </column>
-            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()">
-                <constraints nullable="false"/>
-            </column>
-        </createTable>
-
-        <addForeignKeyConstraint 
-            baseTableName="audit_log"
-            baseColumnNames="user_id"
-            referencedTableName="users"
-            referencedColumnNames="user_id"
-            constraintName="fk_audit_log_user_id"
-            onDelete="RESTRICT"
-            onUpdate="NO ACTION"/>
-
-        <createIndex indexName="idx_audit_log_user" tableName="audit_log">
-            <column name="user_id"/>
-        </createIndex>
-
-        <createIndex indexName="idx_audit_log_entity" tableName="audit_log">
-            <column name="entity_type"/>
-            <column name="entity_id"/>
-        </createIndex>
-
-        <createIndex indexName="idx_audit_log_created" tableName="audit_log">
-            <column name="created_at"/>
-        </createIndex>
-
-        <rollback>
-            <dropTable tableName="audit_log"/>
-        </rollback>
-    </changeSet>
-
-    <!-- ========================================== -->
-    <!-- CHANGESET 15: Create Repair History Table  -->
-    <!-- ========================================== -->
-    <changeSet id="C015" author="CIOC">
-        <comment>Track status changes and important events for repairs</comment>
-        
-        <createTable tableName="repair_history">
-            <column name="repair_history_id" type="UUID" defaultValueComputed="uuid_generate_v4()">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="repair_id" type="UUID">
-                <constraints nullable="false"/>
-            </column>
-            <column name="user_id" type="UUID">
-                <constraints nullable="false"/>
-            </column>
-            <column name="previous_status_id" type="UUID">
-                <constraints nullable="true"/>
-            </column>
-            <column name="new_status_id" type="UUID">
-                <constraints nullable="false"/>
-            </column>
-            <column name="comment" type="TEXT">
-                <constraints nullable="true"/>
-            </column>
-            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()">
-                <constraints nullable="false"/>
-            </column>
-        </createTable>
-
-        <addForeignKeyConstraint 
-            baseTableName="repair_history"
-            baseColumnNames="repair_id"
-            referencedTableName="repairs"
-            referencedColumnNames="repair_id"
-            constraintName="fk_repair_history_repair_id"
-            onDelete="CASCADE"
-            onUpdate="NO ACTION"/>
-
-        <addForeignKeyConstraint 
-            baseTableName="repair_history"
-            baseColumnNames="user_id"
-            referencedTableName="users"
-            referencedColumnNames="user_id"
-            constraintName="fk_repair_history_user_id"
-            onDelete="RESTRICT"
-            onUpdate="NO ACTION"/>
-
-        <addForeignKeyConstraint 
-            baseTableName="repair_history"
-            baseColumnNames="previous_status_id"
-            referencedTableName="repair_status"
-            referencedColumnNames="repair_status_id"
-            constraintName="fk_repair_history_previous_status_id"
-            onDelete="RESTRICT"
-            onUpdate="NO ACTION"/>
-
-        <addForeignKeyConstraint 
-            baseTableName="repair_history"
-            baseColumnNames="new_status_id"
-            referencedTableName="repair_status"
-            referencedColumnNames="repair_status_id"
-            constraintName="fk_repair_history_new_status_id"
-            onDelete="RESTRICT"
-            onUpdate="NO ACTION"/>
-
-        <createIndex indexName="idx_repair_history_repair" tableName="repair_history">
-            <column name="repair_id"/>
-        </createIndex>
-
-        <createIndex indexName="idx_repair_history_user" tableName="repair_history">
-            <column name="user_id"/>
-        </createIndex>
-
-        <createIndex indexName="idx_repair_history_created" tableName="repair_history">
-            <column name="created_at"/>
-        </createIndex>
-
-        <rollback>
-            <dropTable tableName="repair_history"/>
         </rollback>
     </changeSet>
 </databaseChangeLog>
