@@ -3,8 +3,6 @@ from typing import Optional
 from datetime import datetime
 from uuid import UUID
 
-from app.schemas.role import RoleResponse
-
 class StoreBase(BaseModel):
     name: str
     address: Optional[str] = None
@@ -17,7 +15,7 @@ class StoreBase(BaseModel):
 class StoreCreate(StoreBase):
     created_by: UUID
 
-class StoreUpdate(BaseModel):
+class StoreUpdate(StoreBase):
     updated_by: UUID
 
 class StoreResponse(StoreBase):

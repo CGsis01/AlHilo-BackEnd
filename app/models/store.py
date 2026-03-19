@@ -1,6 +1,5 @@
 import uuid
 from sqlalchemy import Column, String, UUID
-from sqlalchemy.orm import relationship
 from app.models.base import BaseModel
 
 class Store(BaseModel):
