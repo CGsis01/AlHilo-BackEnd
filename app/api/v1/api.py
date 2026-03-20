@@ -1,10 +1,11 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import auth, users, roles, clients, repairs, repair_types, payments, payment_types, repair_status, whatsapp, store
+from app.api.v1.endpoints import auth, users, roles, clients, repairs, repair_types, payments, payment_types, repair_status, whatsapp, store, material
 
 api_router = APIRouter()
 
 api_router.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 api_router.include_router(store.router, prefix="/stores", tags=["Stores"])
+api_router.include_router(material.router, prefix="/materials", tags=["Materials"])
 api_router.include_router(users.router, prefix="/users", tags=["Users"])
 api_router.include_router(roles.router, prefix="/roles", tags=["Roles"])
 api_router.include_router(clients.router, prefix="/clients", tags=["Clients"])
