@@ -45,7 +45,7 @@ async def update_store(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)):
     store_service = StoreService(db)
-    print(f"Updating store with ID: {store_id} and data: {store_data}")
+
     return await store_service.update_store(store_id, store_data)
 
 @router.get("/", response_model=ApiResponse[List[StoreResponse]])

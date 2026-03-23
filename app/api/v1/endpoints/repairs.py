@@ -36,7 +36,7 @@ async def assign_repair(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)):
     repair_service = RepairService(db)
-    print(f"Assigning repair {assign_repair_data.repair_id} to user {assign_repair_data.assigned_to_id}")
+
     return await repair_service.assign_repair(assign_repair_data.repair_id, assign_repair_data)
 
 @router.post("/update-status", response_model=ApiResponse[RepairResponse])
