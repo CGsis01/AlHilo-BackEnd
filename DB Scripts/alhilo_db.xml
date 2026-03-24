@@ -436,9 +436,138 @@
     </changeSet>
 
     <!-- ========================================== -->
-    <!-- CHANGESET 10: Create Repair Status Table   -->
+    <!-- CHANGESET 10: Create Garments Table        -->
     <!-- ========================================== -->
     <changeSet id="C010" author="CIOC">
+        <comment>Create garments catalog table for garment types</comment>
+        <createTable tableName="garments">
+            <column name="garment_id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="code" type="VARCHAR(25)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="category" type="VARCHAR(50)"/>
+            <column name="store_id" type="UUID"/>
+            <column name="is_active" type="BOOLEAN" defaultValue="true"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()"/>
+            <column name="created_by" type="UUID"/>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()"/>
+            <column name="updated_by" type="UUID"/>
+        </createTable>
+
+        <addForeignKeyConstraint 
+            baseTableName="garments"
+            baseColumnNames="store_id"
+            referencedTableName="stores"
+            referencedColumnNames="store_id"
+            constraintName="fk_garments_store"
+            onDelete="RESTRICT"
+            onUpdate="NO ACTION"/>
+
+        <createIndex indexName="idx_garments_name" tableName="garments">
+            <column name="name"/>
+        </createIndex>
+
+        <createIndex indexName="idx_garments_code" tableName="garments">
+            <column name="code"/>
+        </createIndex>
+
+        <createIndex indexName="idx_garments_category" tableName="garments">
+            <column name="category"/>
+        </createIndex>
+
+        <createIndex indexName="idx_garments_store" tableName="garments">
+            <column name="store_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="garments"/>
+        </rollback>
+    </changeSet>
+
+    <!-- ========================================== -->
+    <!-- CHANGESET 11: Garment Repair Types         -->
+    <!-- ========================================== -->
+    <changeSet id="C011" author="CIOC">
+        <comment>Junction table to map which repair types are applicable to which garments</comment>
+        <createTable tableName="garment_repair_types">
+            <column name="garment_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="repair_type_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_default" type="BOOLEAN" defaultValue="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="estimated_price_override" type="DECIMAL(10,2)"/>
+            <column name="estimated_time_override" type="INTEGER"/>
+            <column name="sort_order" type="INTEGER"/>
+            <column name="store_id" type="UUID"/>
+            <column name="is_active" type="BOOLEAN" defaultValue="true"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()"/>
+            <column name="created_by" type="UUID"/>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()"/>
+            <column name="updated_by" type="UUID"/>
+        </createTable>
+
+        <addPrimaryKey tableName="garment_repair_types" 
+            columnNames="garment_id, repair_type_id, store_id" 
+            constraintName="pk_garment_repair_types"/>
+
+        <addForeignKeyConstraint 
+            baseTableName="garment_repair_types"
+            baseColumnNames="garment_id"
+            referencedTableName="garments"
+            referencedColumnNames="garment_id"
+            constraintName="fk_garment_repair_types_garment_id"
+            onDelete="RESTRICT"
+            onUpdate="NO ACTION"/>
+
+        <addForeignKeyConstraint 
+            baseTableName="garment_repair_types"
+            baseColumnNames="repair_type_id"
+            referencedTableName="repair_types"
+            referencedColumnNames="repair_type_id"
+            constraintName="fk_garment_repair_types_repair_type_id"
+            onDelete="RESTRICT"
+            onUpdate="NO ACTION"/>
+
+        <addForeignKeyConstraint 
+            baseTableName="garment_repair_types"
+            baseColumnNames="store_id"
+            referencedTableName="stores"
+            referencedColumnNames="store_id"
+            constraintName="fk_garment_repair_types_store"
+            onDelete="RESTRICT"
+            onUpdate="NO ACTION"/>
+
+        <createIndex indexName="idx_garment_repair_types_garment" tableName="garment_repair_types">
+            <column name="garment_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_garment_repair_types_repair_type" tableName="garment_repair_types">
+            <column name="repair_type_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_garment_repair_types_store" tableName="garment_repair_types">
+            <column name="store_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="garment_repair_types"/>
+        </rollback>
+    </changeSet>
+
+    <!-- ========================================== -->
+    <!-- CHANGESET 12: Create Repair Status Table   -->
+    <!-- ========================================== -->
+    <changeSet id="C012" author="CIOC">
         <comment>Create repair status table</comment>
         <createTable tableName="repair_status">
             <column name="repair_status_id" type="UUID" defaultValueComputed="uuid_generate_v4()">
@@ -460,9 +589,9 @@
     </changeSet>
 
     <!-- ========================================== -->
-    <!-- CHANGESET 11: Create Repairs Table         -->
+    <!-- CHANGESET 13: Create Repairs Table         -->
     <!-- ========================================== -->
-    <changeSet id="C011" author="CIOC">
+    <changeSet id="C013" author="CIOC">
         <comment>Create repairs table</comment>
         <createTable tableName="repairs">
             <column name="repair_id" type="UUID" defaultValueComputed="uuid_generate_v4()">
@@ -582,9 +711,9 @@
     </changeSet>
 
     <!-- ========================================== -->
-    <!-- CHANGESET 12: Create Repair Items Table    -->
+    <!-- CHANGESET 14: Create Repair Items Table    -->
     <!-- ========================================== -->
-    <changeSet id="C012" author="CIOC">
+    <changeSet id="C014" author="CIOC">
         <comment>Create repair items table</comment>
         <createTable tableName="repair_items">
             <column name="repair_item_id" type="UUID" defaultValueComputed="uuid_generate_v4()">
@@ -593,8 +722,8 @@
             <column name="repair_id" type="UUID">
                 <constraints nullable="false"/>
             </column>
-            <column name="garment_type" type="VARCHAR(100)">
-                <constraints nullable="false"/>
+            <column name="garment_id" type="UUID">
+                <constraints nullable="true"/>
             </column>
             <column name="repair_type_id" type="UUID">
                 <constraints nullable="false"/>
@@ -615,6 +744,15 @@
 
         <addForeignKeyConstraint 
             baseTableName="repair_items"
+            baseColumnNames="garment_id"
+            referencedTableName="garments"
+            referencedColumnNames="garment_id"
+            constraintName="fk_repair_items_garment_id"
+            onDelete="RESTRICT"
+            onUpdate="NO ACTION"/>
+
+        <addForeignKeyConstraint 
+            baseTableName="repair_items"
             baseColumnNames="repair_type_id"
             referencedTableName="repair_types"
             referencedColumnNames="repair_type_id"
@@ -631,6 +769,10 @@
             onDelete="RESTRICT"
             onUpdate="NO ACTION"/>
 
+        <createIndex indexName="idx_repair_items_garment" tableName="repair_items">
+            <column name="garment_id"/>
+        </createIndex>
+
         <createIndex indexName="idx_repair_item_repair_type" tableName="repair_items">
             <column name="repair_type_id"/>
         </createIndex>
@@ -642,9 +784,9 @@
     </changeSet>
 
     <!-- ========================================== -->
-    <!-- CHANGESET 13: Create Payment Types Table   -->
+    <!-- CHANGESET 15: Create Payment Types Table   -->
     <!-- ========================================== -->
-    <changeSet id="C013" author="CIOC">
+    <changeSet id="C015" author="CIOC">
         <comment>Create payment types table</comment>
         <createTable tableName="payment_types">
             <column name="payment_type_id" type="UUID" defaultValueComputed="uuid_generate_v4()">
@@ -665,9 +807,9 @@
     </changeSet>
 
     <!-- ========================================== -->
-    <!-- CHANGESET 14: Create Payments Table        -->
+    <!-- CHANGESET 16: Create Payments Table        -->
     <!-- ========================================== -->
-    <changeSet id="C014" author="CIOC">
+    <changeSet id="C016" author="CIOC">
         <comment>Create payments table</comment>
         <createTable tableName="payments">
             <column name="payment_id" type="UUID" defaultValueComputed="uuid_generate_v4()">
@@ -739,9 +881,9 @@
     </changeSet>
 
     <!-- ========================================== -->
-    <!-- CHANGESET 15: Seed Initial Users           -->
+    <!-- CHANGESET 17: Seed Initial Users           -->
     <!-- ========================================== -->
-    <changeSet id="C015" author="CIOC">
+    <changeSet id="C017" author="CIOC">
         <comment>Insert default data for system initialization</comment>
 
         <!-- Stores -->
@@ -968,6 +1110,71 @@
             <column name="store_id" valueComputed="(SELECT store_id FROM stores)"/>
         </insert>
 
+        <!-- Garments -->
+        <insert tableName="garments">
+            <column name="name" value="Pantalón"/>
+            <column name="code" value="pantalon"/>
+            <column name="description" value="Pantalones, jeans, slacks"/>
+            <column name="category" value="Inferior"/>
+            <column name="store_id" valueComputed="(SELECT store_id FROM stores)"/>
+        </insert>
+
+        <insert tableName="garments">
+            <column name="name" value="Camisa"/>
+            <column name="code" value="camisa"/>
+            <column name="description" value="Camisas, blusas"/>
+            <column name="category" value="Superior"/>
+            <column name="store_id" valueComputed="(SELECT store_id FROM stores)"/>
+        </insert>
+
+        <insert tableName="garments">
+            <column name="name" value="Vestido"/>
+            <column name="code" value="vestido"/>
+            <column name="description" value="Vestidos, vestidos de noche"/>
+            <column name="category" value="Completo"/>
+            <column name="store_id" valueComputed="(SELECT store_id FROM stores)"/>
+        </insert>
+
+        <insert tableName="garments">
+            <column name="name" value="Falda"/>
+            <column name="code" value="falda"/>
+            <column name="description" value="Faldas"/>
+            <column name="category" value="Inferior"/>
+            <column name="store_id" valueComputed="(SELECT store_id FROM stores)"/>
+        </insert>
+
+        <insert tableName="garments">
+            <column name="name" value="Saco"/>
+            <column name="code" value="saco"/>
+            <column name="description" value="Sacos, blazers, chaquetas"/>
+            <column name="category" value="Superior"/>
+            <column name="store_id" valueComputed="(SELECT store_id FROM stores)"/>
+        </insert>
+
+        <insert tableName="garments">
+            <column name="name" value="Shorts"/>
+            <column name="code" value="shorts"/>
+            <column name="description" value="Shorts, bermudas"/>
+            <column name="category" value="Inferior"/>
+            <column name="store_id" valueComputed="(SELECT store_id FROM stores)"/>
+        </insert>
+
+        <insert tableName="garments">
+            <column name="name" value="Abrigo"/>
+            <column name="code" value="abrigo"/>
+            <column name="description" value="Abrigos, chaquetones"/>
+            <column name="category" value="Superior"/>
+            <column name="store_id" valueComputed="(SELECT store_id FROM stores)"/>
+        </insert>
+
+        <insert tableName="garments">
+            <column name="name" value="Otro"/>
+            <column name="code" value="otro"/>
+            <column name="description" value="Otras prendas no categorizadas"/>
+            <column name="category" value="Otro"/>
+            <column name="store_id" valueComputed="(SELECT store_id FROM stores)"/>
+        </insert>
+
         <!-- Payment Types -->
         <insert tableName="payment_types">
             <column name="payment_type_id" valueComputed="uuid_generate_v4()"/>
@@ -988,14 +1195,15 @@
             <delete tableName="repair_status"/>
             <delete tableName="repair_complexities"/>
             <delete tableName="repair_types"/>
+            <delete tableName="garments"/>
             <delete tableName="payment_types"/>
         </rollback>
     </changeSet>
 
     <!-- ========================================== -->
-    <!-- CHANGESET 16: Create Audit Triggers        -->
+    <!-- CHANGESET 18: Create Audit Triggers        -->
     <!-- ========================================== -->
-    <changeSet id="C016" author="CIOC" dbms="postgresql">
+    <changeSet id="C018" author="CIOC" dbms="postgresql">
         <comment>Create triggers to automatically update updated_at timestamp</comment>
         
         <sql dbms="postgresql">
@@ -1034,9 +1242,9 @@
     </changeSet>
 
     <!-- ========================================== -->
-    <!-- CHANGESET 17: Create Refresh Tokens Table  -->
+    <!-- CHANGESET 19: Create Refresh Tokens Table  -->
     <!-- ========================================== -->
-    <changeSet id="C017" author="CIOC">
+    <changeSet id="C019" author="CIOC">
         <comment>Table to store refresh tokens for authentication</comment>
         
         <createTable tableName="refresh_tokens">

@@ -14,3 +14,4 @@ class RepairType(BaseModel):
     commission_percentage = Column(Numeric(10, 2))
 
     repair_items = relationship("RepairItem", back_populates="repair_type")
+    garment_repair_types = relationship("GarmentRepairType", back_populates="repair_type")

@@ -5,6 +5,8 @@ from app.models.repair_item import RepairItem
 from app.models.role import Role
 from app.models.repair import Repair
 from app.models.user import User
+from app.models.garment import Garment
+from app.models.garment_repair_type import GarmentRepairType
 
 __all__ = [
     "Client",
@@ -14,4 +16,6 @@ __all__ = [
     "Role",
     "Repair",
     "User",
+    "Garment",
+    "GarmentRepairType",
 ]
