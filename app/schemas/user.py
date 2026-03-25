@@ -10,6 +10,7 @@ class UserFilters(BaseModel):
     role_id: Optional[UUID] = None
     role_code: Optional[str] = None
     role_codes: Optional[List[str]] = None
+    store_id: Optional[UUID] = None
     is_active: Optional[bool] = None
     search: Optional[str] = None
 
@@ -20,12 +21,14 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
     role_id: UUID
+    store_id: UUID
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
     email: Optional[EmailStr] = None
     password: Optional[str] = None
     role_id: Optional[UUID] = None
+    store_id: Optional[UUID] = None
     is_active: Optional[bool] = None
 
 class UserResponse(UserBase):
@@ -41,10 +44,12 @@ class UserResponse(UserBase):
 
 class UserDeactivate(BaseModel):
     id: UUID
+    store_id: UUID
     updated_by: UUID
 
 class UserActivate(BaseModel):
     id: UUID
+    store_id: UUID
     updated_by: UUID
 
 class UserLogin(BaseModel):

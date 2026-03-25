@@ -12,7 +12,7 @@ class UserService:
         self.db = db
         self.user_repository = UserRepository(db)
 
-    async def get_user(self, user_id: UUID) -> ApiResponse[UserResponse]:
+    async def get_user(self, user_id: UUID, store_id: Optional[UUID] = None) -> ApiResponse[UserResponse]:
         response = ApiResponse[UserResponse](
             status=200,
             message="User retrieved successfully",
@@ -20,7 +20,7 @@ class UserService:
             data=None)
 
         try:
-            user = await self.user_repository.get_by_id(user_id)
+            user = await self.user_repository.get_by_id(user_id, store_id)
             if not user:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -94,7 +94,7 @@ class UserService:
             data=None)
         
         try:
-            user = await self.user_repository.get_by_id(user_id)
+            user = await self.user_repository.get_by_id(user_id, user_data.store_id)
             if not user:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -128,7 +128,7 @@ class UserService:
             data=False)
         
         try:
-            user = await self.user_repository.get_by_id(user_data.id)
+            user = await self.user_repository.get_by_id(user_data.id, user_data.store_id)
             if not user:
                 response.status = 404
                 response.message = "No user found with the provided ID"
@@ -136,7 +136,7 @@ class UserService:
 
                 return response
             
-            await self.user_repository.deactivate_user(user_data.id, user_data.updated_by)
+            await self.user_repository.deactivate_user(user_data.id, user_data.store_id, user_data.updated_by)
             
             response.data = True
         except Exception as e:
@@ -154,7 +154,7 @@ class UserService:
             data=False)
         
         try:
-            user = await self.user_repository.get_by_id(user_data.id)
+            user = await self.user_repository.get_by_id(user_data.id, user_data.store_id)
             if not user:
                 response.status = 404
                 response.message = "No user found with the provided ID"
@@ -162,7 +162,7 @@ class UserService:
 
                 return response
 
-            await self.user_repository.activate_user(user_data.id, user_data.updated_by)
+            await self.user_repository.activate_user(user_data.id, user_data.store_id, user_data.updated_by)
 
             response.data = True
         except Exception as e:

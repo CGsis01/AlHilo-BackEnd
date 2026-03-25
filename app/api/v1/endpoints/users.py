@@ -11,6 +11,45 @@ from app.models.user import User
 
 router = APIRouter()
 
+@router.get("/", response_model=ApiResponse[List[UserResponse]])
+async def get_users(
+    role_id: Optional[UUID] = Query(None, description="Filter by role ID"),
+    role_code: Optional[str] = Query(None, description="Filter by role code"),
+    role_codes: Optional[List[str]] = Query(None, description="Filter by role codes"),
+    store_id: Optional[UUID] = Query(None, description="Filter by store ID"),
+    is_active: Optional[bool] = Query(None, description="Filter by active status"),
+    search: Optional[str] = Query(None, description="Search by name or email"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)) -> ApiResponse[List[UserResponse]]:
+    user_service = UserService(db)
+    
+    filters = UserFilters(
+        role_id=role_id,
+        role_code=role_code,
+        role_codes=role_codes,
+        store_id=store_id,
+        is_active=is_active,
+        search=search
+    )
+    
+    return await user_service.get_users(filters)
+
+@router.get("/me", response_model=UserResponse)
+async def get_current_user_info(
+    current_user: User = Depends(get_current_active_user)) -> UserResponse:
+    
+    return UserResponse.model_validate(current_user)
+
+@router.get("/{user_id}", response_model=ApiResponse[UserResponse])
+async def get_user(
+    user_id: UUID,
+    store_id: Optional[UUID] = Query(None, description="Filter materials by store ID"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)) -> ApiResponse[UserResponse]:
+    user_service = UserService(db)
+    
+    return await user_service.get_user(user_id, store_id)
+
 @router.post("/", response_model=ApiResponse[UserResponse])
 async def create_user(
     user_data: UserCreate,
@@ -47,39 +86,3 @@ async def update_user(
     user_service = UserService(db)
     
     return await user_service.update_user(user_id, user_data)
-
-@router.get("/me", response_model=UserResponse)
-async def get_current_user_info(
-    current_user: User = Depends(get_current_active_user)) -> UserResponse:
-    
-    return UserResponse.model_validate(current_user)
-
-@router.get("/", response_model=ApiResponse[List[UserResponse]])
-async def get_users(
-    role_id: Optional[UUID] = Query(None, description="Filter by role ID"),
-    role_code: Optional[str] = Query(None, description="Filter by role code"),
-    role_codes: Optional[List[str]] = Query(None, description="Filter by role codes"),
-    is_active: Optional[bool] = Query(None, description="Filter by active status"),
-    search: Optional[str] = Query(None, description="Search by name or email"),
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)) -> ApiResponse[List[UserResponse]]:
-    user_service = UserService(db)
-    
-    filters = UserFilters(
-        role_id=role_id,
-        role_code=role_code,
-        role_codes=role_codes,
-        is_active=is_active,
-        search=search
-    )
-    
-    return await user_service.get_users(filters)
-
-@router.get("/{user_id}", response_model=ApiResponse[UserResponse])
-async def get_user(
-    user_id: UUID,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)) -> ApiResponse[UserResponse]:
-    user_service = UserService(db)
-    
-    return await user_service.get_user(user_id)

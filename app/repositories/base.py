@@ -14,8 +14,13 @@ class BaseRepository(Generic[T]):
         self.model = model
         self.db = db
 
-    async def get_by_id(self, id: UUID) -> Optional[T]:
-        result = await self.db.execute(select(self.model).filter(self.model.id == id))
+    async def get_by_id(self, id: UUID, store_id: Optional[UUID] = None) -> Optional[T]:
+        query = select(self.model).filter(self.model.id == id)
+        
+        if store_id is not None:
+            query = query.filter(self.model.store_id == store_id)
+        
+        result = await self.db.execute(query)
         
         return result.scalar_one_or_none()
 

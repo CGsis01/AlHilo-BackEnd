@@ -1,6 +1,6 @@
 from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, or_
+from sqlalchemy import select, or_, and_
 from uuid import UUID
 from app.models.user import User
 from app.models.role import Role
@@ -19,12 +19,35 @@ class UserRepository(BaseRepository[User]):
         
         return result.scalar_one_or_none()
 
-    async def deactivate_user(self, user_id: UUID, user_updated_id: UUID) -> Optional[User]:
-        result = await self.db.execute(select(User).filter(User.id == user_id))
+    async def deactivate_user(self, user_id: UUID, store_id: UUID, user_updated_id: UUID) -> Optional[User]:
+        result = await self.db.execute(
+            select(User)
+            .filter(
+                and_(User.id == user_id, 
+                     User.store_id == store_id)))
+
         user = result.scalar_one_or_none()
 
         if user:
             setattr(user, "is_active", False)
+            setattr(user, "updated_by", user_updated_id)
+
+            await self.db.commit()
+            await self.db.refresh(user)
+
+        return user
+
+    async def activate_user(self, user_id: UUID, store_id: UUID, user_updated_id: UUID) -> Optional[User]:
+        result = await self.db.execute(
+            select(User)
+            .filter(
+                and_(User.id == user_id, 
+                     User.store_id == store_id)))
+
+        user = result.scalar_one_or_none()
+
+        if user:
+            setattr(user, "is_active", True)
             setattr(user, "updated_by", user_updated_id)
 
             await self.db.commit()
@@ -46,6 +69,9 @@ class UserRepository(BaseRepository[User]):
             if filters.role_codes is not None:
                 query = query.filter(Role.code.in_(filters.role_codes))
             
+            if filters.store_id is not None:
+                query = query.filter(User.store_id == filters.store_id)
+            
             if filters.is_active is not None:
                 query = query.filter(User.is_active == filters.is_active)
             
@@ -54,23 +80,8 @@ class UserRepository(BaseRepository[User]):
                 query = query.filter(
                     or_(
                         User.name.ilike(search_filter),
-                        User.email.ilike(search_filter)
-                    )
-                )
+                        User.email.ilike(search_filter)))
         
         result = await self.db.execute(query)
         
         return list(result.scalars().all())
-    
-    async def activate_user(self, user_id: UUID, user_updated_id: UUID) -> Optional[User]:
-        result = await self.db.execute(select(User).filter(User.id == user_id))
-        user = result.scalar_one_or_none()
-
-        if user:
-            setattr(user, "is_active", True)
-            setattr(user, "updated_by", user_updated_id)
-
-            await self.db.commit()
-            await self.db.refresh(user)
-
-        return user
