@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Query, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from uuid import UUID
@@ -27,30 +27,34 @@ async def update_client(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)):
     client_service = ClientService(db)
+    
     return await client_service.update_client(client_id, client_data)
 
 @router.get("/{client_id}", response_model=ApiResponse[ClientResponse])
 async def get_client(
     client_id: UUID,
+    store_id: UUID = Query(None, description="Store ID to which the client belongs"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)):
     client_service = ClientService(db)
     
-    return await client_service.get_client(client_id)
+    return await client_service.get_client(client_id, store_id)
 
 @router.get("/by-phone/{phone}", response_model=ApiResponse[ClientResponse])
 async def get_client_by_phone(
     phone: str,
+    store_id: UUID = Query(None, description="Store ID to which the client belongs"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)):
     client_service = ClientService(db)
     
-    return await client_service.get_client_by_phone(phone)
+    return await client_service.get_client_by_phone(phone, store_id)
 
 @router.get("/", response_model=ApiResponse[List[ClientResponse]])
 async def search_clients(
+    store_id: UUID = Query(None, description="Store ID to which the clients belong"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)):
     client_service = ClientService(db)
     
-    return await client_service.search_clients()
+    return await client_service.search_clients(store_id)

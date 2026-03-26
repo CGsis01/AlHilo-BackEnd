@@ -2,6 +2,7 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime, date
 from uuid import UUID
+from app.schemas.store import StoreResponse
 
 class ClientBase(BaseModel):
     full_name: str
@@ -14,7 +15,8 @@ class ClientBase(BaseModel):
     birth_date: Optional[date] = None
 
 class ClientCreate(ClientBase):
-    pass
+    store_id: UUID
+    created_by: UUID
 
 class ClientUpdate(BaseModel):
     full_name: Optional[str] = None
@@ -25,10 +27,13 @@ class ClientUpdate(BaseModel):
     facebook: Optional[str] = None
     instagram: Optional[str] = None
     birth_date: Optional[date] = None
+    store_id: UUID
     is_active: Optional[bool] = None
+    updated_by: UUID
 
 class ClientResponse(ClientBase):
     id: UUID
+    store: StoreResponse
     is_active: bool
     created_at: datetime
     updated_at: datetime

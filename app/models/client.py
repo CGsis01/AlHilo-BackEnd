@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, UUID, Text, Date
+from sqlalchemy import Column, String, UUID, Text, Date, ForeignKey
 from sqlalchemy.orm import relationship
 from app.models.base import BaseModel
 
@@ -15,5 +15,7 @@ class Client(BaseModel):
     facebook = Column(String(255))
     instagram = Column(String(255))
     birth_date = Column(Date)
+    store_id = Column(UUID(as_uuid=True), ForeignKey("stores.store_id"), nullable=False, index=True)
     
     repairs = relationship("Repair", back_populates="client")
+    store = relationship("Store", foreign_keys=[store_id])
