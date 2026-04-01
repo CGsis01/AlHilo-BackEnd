@@ -66,7 +66,7 @@ class MaterialService:
             data=False)
         
         try:
-            material = await self.material_repository.get_by_id(material_data.id)
+            material = await self.material_repository.get_by_id(material_data.id, store_id=material_data.store_id)
             if not material:
                 response.status = 404
                 response.message = "No material found with the provided ID"
@@ -74,7 +74,7 @@ class MaterialService:
 
                 return response
             
-            await self.material_repository.deactivate_material(material_data.id, material_data.updated_by)
+            await self.material_repository.deactivate_material(material_data.id, material_data.store_id, material_data.updated_by)
             
             response.data = True
         except Exception as e:
@@ -92,7 +92,7 @@ class MaterialService:
             data=False)
         
         try:
-            material = await self.material_repository.get_by_id(material_data.id)
+            material = await self.material_repository.get_by_id(material_data.id, store_id=material_data.store_id)
             if not material:
                 response.status = 404
                 response.message = "No material found with the provided ID"
@@ -100,7 +100,7 @@ class MaterialService:
 
                 return response
 
-            await self.material_repository.activate_material(material_data.id, material_data.updated_by)
+            await self.material_repository.activate_material(material_data.id, material_data.store_id, material_data.updated_by)
 
             response.data = True
         except Exception as e:
@@ -134,7 +134,7 @@ class MaterialService:
         
         return response
     
-    async def get_material_by_id(self, material_id: UUID) -> ApiResponse[MaterialResponse]:
+    async def get_material_by_id(self, material_id: UUID, store_id: Optional[UUID] = None) -> ApiResponse[MaterialResponse]:
         response = ApiResponse[MaterialResponse](
             status=200,
             message="Material retrieved successfully",
@@ -142,7 +142,7 @@ class MaterialService:
             data=None)
         
         try:
-            material = await self.material_repository.get_by_id(material_id)
+            material = await self.material_repository.get_by_id(material_id, store_id=store_id)
             if not material:
                 response.status = 404
                 response.message = "No material found with the provided ID"

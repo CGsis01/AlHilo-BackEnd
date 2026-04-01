@@ -9,8 +9,8 @@ class MaterialRepository(BaseRepository[Material]):
     def __init__(self, db: AsyncSession):
         super().__init__(Material, db)
 
-    async def deactivate_material(self, material_id: UUID, user_id: UUID) -> Optional[Material]:
-        result = await self.db.execute(select(Material).filter(Material.id == material_id))
+    async def deactivate_material(self, material_id: UUID, store_id: UUID, user_id: UUID) -> Optional[Material]:
+        result = await self.db.execute(select(Material).filter(Material.id == material_id, Material.store_id == store_id))
         material = result.scalar_one_or_none()
 
         if material:
@@ -22,8 +22,8 @@ class MaterialRepository(BaseRepository[Material]):
 
         return material
 
-    async def activate_material(self, material_id: UUID, user_id: UUID) -> Optional[Material]:
-        result = await self.db.execute(select(Material).filter(Material.id == material_id))
+    async def activate_material(self, material_id: UUID, store_id: UUID, user_id: UUID) -> Optional[Material]:
+        result = await self.db.execute(select(Material).filter(Material.id == material_id, Material.store_id == store_id))
         material = result.scalar_one_or_none()
 
         if material:

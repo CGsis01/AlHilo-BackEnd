@@ -31,8 +31,10 @@ class MaterialResponse(MaterialBase):
 
 class MaterialDeactivate(BaseModel):
     id: UUID
+    store_id: UUID
     updated_by: UUID
 
 class MaterialActivate(BaseModel):
     id: UUID
+    store_id: UUID
     updated_by: UUID
