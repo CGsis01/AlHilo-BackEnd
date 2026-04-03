@@ -10,15 +10,13 @@ from app.schemas.garment import (
     GarmentUpdate, 
     GarmentResponse, 
     GarmentDeactivate, 
-    GarmentActivate
-)
+    GarmentActivate)
 from app.schemas.garment_repair_type import (
     GarmentRepairTypeCreate,
     GarmentRepairTypeUpdate,
     GarmentRepairTypeResponse,
     GarmentRepairTypeActivate,
-    GarmentRepairTypeDeactivate
-)
+    GarmentRepairTypeDeactivate)
 from app.services.garment_service import GarmentService
 from app.services.garment_repair_type_service import GarmentRepairTypeService
 from app.models.user import User

@@ -16,3 +16,5 @@ class Garment(BaseModel):
     
     # Relationships
     garment_repair_types = relationship("GarmentRepairType", back_populates="garment", cascade="all, delete-orphan")
+    repair_items = relationship("RepairItem", back_populates="garment", cascade="all, delete-orphan")
+    store = relationship("Store", foreign_keys=[store_id])
