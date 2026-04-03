@@ -24,8 +24,13 @@ class BaseRepository(Generic[T]):
         
         return result.scalar_one_or_none()
 
-    async def get_all(self, skip: int = 0, limit: int = 100) -> Optional[List[T]]:
-        result = await self.db.execute(select(self.model).offset(skip).limit(limit))
+    async def get_all(self, skip: int = 0, limit: int = 100, store_id: Optional[UUID] = None) -> Optional[List[T]]:
+        query = select(self.model).offset(skip).limit(limit)
+
+        if store_id is not None:
+            query = query.filter(self.model.store_id == store_id)
+
+        result = await self.db.execute(query)
         
         return list(result.scalars().all())
 

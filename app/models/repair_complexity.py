@@ -12,7 +12,9 @@ class RepairComplexity(BaseModel):
     code = Column(String(50), nullable=False, unique=True)
     labor_multiplier = Column(Numeric(5, 2), nullable=False, default=1.0)
     time_multiplier = Column(Numeric(5, 2), nullable=False, default=1.0)
+    price_multiplier = Column(Numeric(5, 2), nullable=False, default=1.0)
     store_id = Column(UUID(as_uuid=True), ForeignKey("stores.store_id"), nullable=False)
     
     # Relationship
+    repair_type = relationship("RepairType", back_populates="repair_complexity")
     store = relationship("Store", foreign_keys=[store_id])

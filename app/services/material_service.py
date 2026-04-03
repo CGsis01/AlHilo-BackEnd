@@ -66,7 +66,7 @@ class MaterialService:
             data=False)
         
         try:
-            material = await self.material_repository.get_by_id(material_data.id, store_id=material_data.store_id)
+            material = await self.material_repository.get_by_id(material_data.id, material_data.store_id)
             if not material:
                 response.status = 404
                 response.message = "No material found with the provided ID"

@@ -14,4 +14,5 @@ class Material(BaseModel):
     store_id = Column(UUID(as_uuid=True), ForeignKey("stores.store_id"), nullable=False)
     
     # Relationship
+    repair_type_materials = relationship("RepairTypeMaterial", back_populates="material")
     store = relationship("Store", foreign_keys=[store_id])

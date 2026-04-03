@@ -1,10 +1,15 @@
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories.repair_type_repository import RepairTypeRepository
 from app.schemas.api_response import ApiResponse
-from app.schemas.repair_type import RepairTypeCreate, RepairTypeUpdate, RepairTypeActivate, RepairTypeDeactivate, RepairTypeResponse
+from app.schemas.repair_type import (
+    RepairTypeCreate, 
+    RepairTypeUpdate, 
+    RepairTypeActivate, 
+    RepairTypeDeactivate, 
+    RepairTypeResponse)
 
 class RepairTypeService:
     """Service layer for RepairType operations"""
@@ -67,7 +72,7 @@ class RepairTypeService:
             data=False)
         
         try:
-            repair_type = await self.repair_type_repository.get_by_id(repair_type_data.id)
+            repair_type = await self.repair_type_repository.get_by_id(repair_type_data.id, repair_type_data.store_id)
             if not repair_type:
                 response.status = 404
                 response.message = "No repair type found with the provided ID"
@@ -75,7 +80,7 @@ class RepairTypeService:
 
                 return response
             
-            await self.repair_type_repository.deactivate_repair_type(repair_type_data.id, repair_type_data.updated_by)
+            await self.repair_type_repository.deactivate_repair_type(repair_type_data.id, repair_type_data.store_id, repair_type_data.updated_by)
             
             response.data = True
         except Exception as e:
@@ -93,7 +98,7 @@ class RepairTypeService:
             data=False)
         
         try:
-            repair_type = await self.repair_type_repository.get_by_id(repair_type_data.id)
+            repair_type = await self.repair_type_repository.get_by_id(repair_type_data.id, repair_type_data.store_id)
             if not repair_type:
                 response.status = 404
                 response.message = "No repair type found with the provided ID"
@@ -101,7 +106,7 @@ class RepairTypeService:
 
                 return response
 
-            await self.repair_type_repository.activate_repair_type(repair_type_data.id, repair_type_data.updated_by)
+            await self.repair_type_repository.activate_repair_type(repair_type_data.id, repair_type_data.store_id, repair_type_data.updated_by)
 
             response.data = True
         except Exception as e:
@@ -111,7 +116,7 @@ class RepairTypeService:
         
         return response
 
-    async def get_repair_types(self) -> ApiResponse[List[RepairTypeResponse]]:
+    async def get_repair_types(self, store_id: Optional[UUID] = None) -> ApiResponse[List[RepairTypeResponse]]:
         response = ApiResponse[List[RepairTypeResponse]](
             status=200,
             message="Repair types retrieved successfully",
@@ -119,7 +124,7 @@ class RepairTypeService:
             data=None)
         
         try:
-            repair_types = await self.repair_type_repository.get_all()
+            repair_types = await self.repair_type_repository.get_all_with_relationships(store_id)
 
             if repair_types is not None:
                 response.data = [RepairTypeResponse.model_validate(repair_type) for repair_type in repair_types]
