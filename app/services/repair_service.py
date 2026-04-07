@@ -36,7 +36,7 @@ class RepairService:
                 await self.db.commit()
                 await self.db.refresh(repair)
                 
-                repair = await self.repair_repository.get_by_id(UUID(str(repair.id)))
+                repair = await self.repair_repository.get_by_id_with_relations(UUID(str(repair.id)))
 
             response.data = RepairResponse.model_validate(repair)
         except Exception as e:
@@ -55,7 +55,7 @@ class RepairService:
             data=None)
         
         try:
-            repair = await self.repair_repository.get_by_id(repair_id)
+            repair = await self.repair_repository.get_by_id_with_relations(repair_id)
             if not repair:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -87,7 +87,7 @@ class RepairService:
                     self.db.add(RepairItem(**item_data))
              
             await self.db.commit()
-            repair = await self.repair_repository.get_by_id(repair_id)
+            repair = await self.repair_repository.get_by_id_with_relations(repair_id)
              
             response.data = RepairResponse.model_validate(repair)
         except HTTPException as http_exc:
@@ -108,7 +108,7 @@ class RepairService:
             data=None)
 
         try:
-            repair = await self.repair_repository.get_by_id(repair_id)
+            repair = await self.repair_repository.get_by_id_with_relations(repair_id)
             if not repair:
                 response.status = status.HTTP_404_NOT_FOUND
                 response.message = "Repair not found"
@@ -136,7 +136,7 @@ class RepairService:
             data=None)
 
         try:
-            repair = await self.repair_repository.get_by_id(repair_id)
+            repair = await self.repair_repository.get_by_id_with_relations(repair_id)
             if not repair:
                 response.status = status.HTTP_404_NOT_FOUND
                 response.message = "Repair not found"
@@ -185,7 +185,7 @@ class RepairService:
             data=None)
         
         try:
-             repair = await self.repair_repository.get_by_id(repair_id)
+             repair = await self.repair_repository.get_by_id_with_relations(repair_id)
              if not repair:
                  raise HTTPException(
                      status_code=status.HTTP_404_NOT_FOUND,

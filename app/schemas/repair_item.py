@@ -4,10 +4,11 @@ from datetime import datetime
 from uuid import UUID
 from decimal import Decimal
 
+from app.schemas.garment import GarmentResponse
 from app.schemas.repair_type import RepairTypeResponse
 
 class RepairItemBase(BaseModel):
-    garment_type: str
+    garment_id: UUID
     description: str    
     price: Decimal = Field(validation_alias=AliasChoices("price", "estimated_price"))
 
@@ -18,10 +19,10 @@ class RepairItemCreate(RepairItemBase):
 
 class RepairItemUpdate(BaseModel):
     id: Optional[UUID] = None
-    garment_type: Optional[str] = None
+    repair_type_id: Optional[UUID] = None
+    garment_id: Optional[UUID] = None
     description: Optional[str] = None
     price: Optional[Decimal] = None
-    repair_type_id: Optional[UUID] = None
     is_active: Optional[bool] = None
     updated_by: UUID
 
@@ -29,6 +30,7 @@ class RepairItemResponse(RepairItemBase):
     id: UUID
     repair_id: UUID
     repair_type: RepairTypeResponse
+    garment: GarmentResponse
     is_active: bool
     created_at: datetime
     updated_at: datetime

@@ -5,6 +5,7 @@ from sqlalchemy.orm import joinedload, selectinload
 from uuid import UUID
 from app.models.repair import Repair
 from app.models.repair_item import RepairItem
+from app.models.repair_type import RepairType
 from app.repositories.base import BaseRepository
 
 class RepairRepository(BaseRepository[Repair]):
@@ -17,11 +18,13 @@ class RepairRepository(BaseRepository[Repair]):
                 joinedload(Repair.repair_status),
                 joinedload(Repair.assigned_to),
                 joinedload(Repair.created_by_user),
-                selectinload(Repair.repair_items).joinedload(RepairItem.repair_type),
+                selectinload(Repair.repair_items).options(
+                    joinedload(RepairItem.repair_type).joinedload(RepairType.repair_complexity), 
+                    joinedload(RepairItem.garment))
             )
         )
 
-    async def get_by_id(self, id: UUID) -> Optional[Repair]:
+    async def get_by_id_with_relations(self, id: UUID) -> Optional[Repair]:
         result = await self.db.execute(
             self._query_with_relations().filter(Repair.id == id))
 
