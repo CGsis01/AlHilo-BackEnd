@@ -1,7 +1,7 @@
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 from uuid import UUID
 from app.models.payment import Payment
 from app.models.repair import Repair
@@ -20,9 +20,10 @@ class PaymentRepository(BaseRepository[Payment]):
                 joinedload(Payment.repair).joinedload(Repair.assigned_to),
                 joinedload(Payment.repair).joinedload(Repair.created_by_user),
                 joinedload(Payment.repair).selectinload(
-                    Repair.repair_items)
-                    .joinedload(RepairItem.repair_type)
-                    .joinedload(RepairType.repair_complexity),
+                    Repair.repair_items).options(
+                    selectinload(RepairItem.garment),
+                    selectinload(RepairItem.repair_type).selectinload(RepairType.repair_complexity)
+                ),
                 joinedload(Payment.payment_type),
                 joinedload(Payment.created_by_user),
             )
