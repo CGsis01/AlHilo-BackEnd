@@ -48,15 +48,6 @@ async def update_material(
     
     return await material_service.update_material(material_id, material_data)
 
-@router.get("/", response_model=ApiResponse[List[MaterialResponse]])
-async def get_materials(
-    store_id: Optional[UUID] = Query(None, description="Filter materials by store ID"),
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)) -> ApiResponse[List[MaterialResponse]]:
-    material_service = MaterialService(db)
-
-    return await material_service.get_materials(store_id)
-
 @router.get("/{material_id}", response_model=ApiResponse[MaterialResponse])
 async def get_material_by_id(
     material_id: UUID,
@@ -65,3 +56,12 @@ async def get_material_by_id(
     material_service = MaterialService(db)
     
     return await material_service.get_material_by_id(material_id)
+
+@router.get("/", response_model=ApiResponse[List[MaterialResponse]])
+async def get_materials(
+    store_id: Optional[UUID] = Query(None, description="Filter materials by store ID"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)) -> ApiResponse[List[MaterialResponse]]:
+    material_service = MaterialService(db)
+
+    return await material_service.get_materials(store_id)
