@@ -24,7 +24,8 @@ class GarmentRepository(BaseRepository[Garment]):
         """Override to include repair types relationship"""
         result = await self.db.execute(
             select(Garment)
-            .options(selectinload(Garment.garment_repair_types).selectinload(GarmentRepairType.repair_type)))
+            .options(selectinload(Garment.garment_repair_types).selectinload(GarmentRepairType.repair_type))
+            .order_by(Garment.name))
 
         return list(result.scalars().all())
 
@@ -59,6 +60,7 @@ class GarmentRepository(BaseRepository[Garment]):
             select(Garment)
             .options(selectinload(Garment.garment_repair_types).selectinload(GarmentRepairType.repair_type))
             .filter(Garment.store_id == store_id)
-            .filter(Garment.is_active == True))
+            .filter(Garment.is_active == True)
+            .order_by(Garment.name))
 
         return list(result.scalars().all())
