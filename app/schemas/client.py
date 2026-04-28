@@ -8,7 +8,7 @@ class ClientBase(BaseModel):
     full_name: str
     address: str
     personal_phone: str
-    contact_phone: str
+    contact_phone: Optional[str] = None
     email: Optional[EmailStr] = None
     facebook: Optional[str] = None
     instagram: Optional[str] = None
