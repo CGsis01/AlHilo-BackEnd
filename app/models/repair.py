@@ -31,3 +31,4 @@ class Repair(BaseModel):
     created_by_user = relationship("User", foreign_keys=[created_by], back_populates="created_repairs")
     repair_items = relationship(RepairItem, back_populates="repair", cascade="all, delete-orphan")
     payments = relationship("Payment", back_populates="repair", cascade="all, delete-orphan")
+    comments = relationship("RepairComment", back_populates="repair", cascade="all, delete-orphan")

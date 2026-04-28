@@ -1296,4 +1296,63 @@
             <dropTable tableName="refresh_tokens"/>
         </rollback>
     </changeSet>
+
+    <!-- ========================================== -->
+    <!-- CHANGESET 20: Create Repair Comments Table -->
+    <!-- ========================================== -->
+    <changeSet id="C020" author="CIOC">
+        <comment>Table to store comments/reviews on repairs</comment>
+
+        <createTable tableName="repair_comments">
+            <column name="repair_comment_id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="repair_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="comment" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updatedComment" type="TEXT"/>
+            <column name="createdBy" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_by" type="UUID"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="repair_comments"
+            baseColumnNames="repair_id"
+            referencedTableName="repairs"
+            referencedColumnNames="repair_id"
+            constraintName="fk_repair_comments_repair_id"
+            onDelete="CASCADE"
+            onUpdate="NO ACTION"/>
+
+        <addForeignKeyConstraint
+            baseTableName="repair_comments"
+            baseColumnNames="created_by"
+            referencedTableName="users"
+            referencedColumnNames="user_id"
+            constraintName="fk_repair_comments_created_by"
+            onDelete="RESTRICT"
+            onUpdate="NO ACTION"/>
+
+        <createIndex indexName="idx_repair_comments_repair_id" tableName="repair_comments">
+            <column name="repair_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="repair_comments"/>
+        </rollback>
+    </changeSet>
 </databaseChangeLog>
