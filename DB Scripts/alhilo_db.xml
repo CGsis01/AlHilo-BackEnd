@@ -1340,7 +1340,7 @@
 
         <addForeignKeyConstraint
             baseTableName="repair_comments"
-            baseColumnNames="created_by"
+            baseColumnNames="createdBy"
             referencedTableName="users"
             referencedColumnNames="user_id"
             constraintName="fk_repair_comments_created_by"
@@ -1354,5 +1354,60 @@
         <rollback>
             <dropTable tableName="repair_comments"/>
         </rollback>
+    </changeSet>
+
+    <!-- ========================================== -->
+    <!-- CHANGESET 21: Rename created by column     -->
+    <!-- ========================================== -->
+    <changeSet id="C021" author="CIOC">
+        <comment>Alter repair comments table to modify created by column name</comment>
+
+        <renameColumn 
+            tableName="repair_comments" 
+            oldColumnName="createdBy" 
+            newColumnName="created_by" 
+            columnDataType="UUID"/>
+
+        <rollback>
+            <renameColumn 
+            tableName="repair_comments" 
+            oldColumnName="created_by" 
+            newColumnName="createdBy" 
+            columnDataType="UUID"/>
+        </rollback>
+    </changeSet>
+
+    <!-- ========================================== -->
+    <!-- CHANGESET 22: Drop not null constraint     -->
+    <!-- ========================================== -->
+    <changeSet id="C022" author="CIOC">
+        <comment>Drop not null constraint in created by from repair comments table</comment>
+
+        <dropNotNullConstraint 
+            tableName="repair_comments" 
+            columnName="created_by" 
+            columnDataType="UUID"/>
+
+        <rollback>
+            <addNotNullConstraint 
+                tableName="repair_comments" 
+                columnName="created_by" 
+                columnDataType="UUID"/>
+        </rollback>
+    </changeSet>
+
+    <!-- ========================================== -->
+    <!-- CHANGESET 23: Drop foreign key constraint  -->
+    <!-- ========================================== -->
+    <changeSet id="C023" author="CIOC">
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyName="fk_repair_comments_created_by" />
+        </preConditions>
+
+        <comment>Drop foreign key created by from repair comments table</comment>
+        
+        <dropForeignKeyConstraint 
+            baseTableName="repair_comments" 
+            constraintName="fk_repair_comments_created_by" />
     </changeSet>
 </databaseChangeLog>
