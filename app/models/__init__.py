@@ -9,6 +9,7 @@ from app.models.repair import Repair
 from app.models.user import User
 from app.models.garment import Garment
 from app.models.garment_repair_type import GarmentRepairType
+from app.models.repair_comment import RepairComment
 
 __all__ = [
     "Client",
@@ -22,4 +23,5 @@ __all__ = [
     "User",
     "Garment",
     "GarmentRepairType",
+    "RepairComment",
 ]
