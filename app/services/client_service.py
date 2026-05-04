@@ -130,7 +130,7 @@ class ClientService:
         
         return response
 
-    async def delete_client(self, client_id: UUID) -> ApiResponse[bool]:
+    async def delete_client(self, client_id: UUID, store_id: UUID) -> ApiResponse[bool]:
         response = ApiResponse[bool](
             status=200,
             message="Client deleted successfully",
@@ -138,7 +138,7 @@ class ClientService:
             data=True)
         
         try:
-            client = await self.client_repository.get_by_id(client_id)
+            client = await self.client_repository.get_by_id(client_id, store_id)
 
             if not client:
                 response.status = 404
