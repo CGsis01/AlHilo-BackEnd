@@ -58,3 +58,12 @@ async def search_clients(
     client_service = ClientService(db)
     
     return await client_service.search_clients(store_id)
+
+@router.delete("/{client_id}", response_model=ApiResponse[bool])
+async def delete_client(
+    client_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)):
+    client_service = ClientService(db)
+    
+    return await client_service.delete_client(client_id)
