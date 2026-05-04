@@ -135,7 +135,7 @@ class ClientService:
             status=200,
             message="Client deleted successfully",
             code="SUCCESS",
-            data=True)
+            data=False)
         
         try:
             client = await self.client_repository.get_by_id(client_id, store_id)
@@ -147,10 +147,12 @@ class ClientService:
 
                 return response
             
-            await self.client_repository.delete(UUID(str(client.id)))
+            await self.client_repository.delete(client_id)
+            
+            response.data = True
         except Exception as e:
             response.status = 500
-            response.message = str(e)
+            response.message = "Error deleting client"
             response.code = "CLIENT_DELETION_ERROR"
             response.data = False
         
