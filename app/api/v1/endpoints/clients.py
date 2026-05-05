@@ -33,7 +33,7 @@ async def update_client(
 @router.get("/{client_id}", response_model=ApiResponse[ClientResponse])
 async def get_client(
     client_id: UUID,
-    store_id: UUID = Query(None, description="Store ID to which the client belongs"),
+    store_id: UUID = Query(..., description="Store ID to which the client belongs"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)):
     client_service = ClientService(db)
@@ -43,7 +43,7 @@ async def get_client(
 @router.get("/by-phone/{phone}", response_model=ApiResponse[ClientResponse])
 async def get_client_by_phone(
     phone: str,
-    store_id: UUID = Query(None, description="Store ID to which the client belongs"),
+    store_id: UUID = Query(..., description="Store ID to which the client belongs"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)):
     client_service = ClientService(db)
@@ -52,9 +52,19 @@ async def get_client_by_phone(
 
 @router.get("/", response_model=ApiResponse[List[ClientResponse]])
 async def search_clients(
-    store_id: UUID = Query(None, description="Store ID to which the clients belong"),
+    store_id: UUID = Query(..., description="Store ID to which the clients belong"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)):
     client_service = ClientService(db)
     
     return await client_service.search_clients(store_id)
+
+@router.delete("/{client_id}", response_model=ApiResponse[bool])
+async def delete_client(
+    client_id: UUID,
+    store_id: UUID = Query(..., description="Store ID to which the client belongs"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)):
+    client_service = ClientService(db)
+    
+    return await client_service.delete_client(client_id, store_id)

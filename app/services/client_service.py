@@ -129,3 +129,31 @@ class ClientService:
             response.code = "CLIENT_SEARCH_ERROR"
         
         return response
+
+    async def delete_client(self, client_id: UUID, store_id: UUID) -> ApiResponse[bool]:
+        response = ApiResponse[bool](
+            status=200,
+            message="Client deleted successfully",
+            code="SUCCESS",
+            data=False)
+        
+        try:
+            client = await self.client_repository.get_by_id(client_id, store_id)
+
+            if not client:
+                response.status = 404
+                response.message = "No client found with the provided ID"
+                response.code = "CLIENT_RETRIEVAL_ERROR"
+
+                return response
+            
+            await self.client_repository.delete(client_id)
+            
+            response.data = True
+        except Exception as e:
+            response.status = 500
+            response.message = "Error deleting client"
+            response.code = "CLIENT_DELETION_ERROR"
+            response.data = False
+        
+        return response
