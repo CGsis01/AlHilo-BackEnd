@@ -234,3 +234,21 @@ class RepairService:
             response.code = "REPAIR_RETRIEVAL_ERROR"
         
         return response
+
+    async def get_estimated_time_repairs(self) -> ApiResponse[int]:
+        response = ApiResponse[int](
+            status=200,
+            message="Repairs retrieved successfully",
+            code="SUCCESS",
+            data=None)
+        
+        try:
+            repairs_estimated_time = await self.repair_repository.get_estimated_time()
+            
+            response.data = repairs_estimated_time
+        except Exception as e:
+            response.status = 500
+            response.message = str(e)
+            response.code = "REPAIR_RETRIEVAL_ERROR"
+        
+        return response

@@ -61,6 +61,14 @@ async def get_repairs(
     
     return await repair_service.get_repairs(filters)
 
+@router.get("/estimated-time", response_model=ApiResponse[int])
+async def get_estimated_time_repairs(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)):
+    repair_service = RepairService(db)
+
+    return await repair_service.get_estimated_time_repairs()
+
 @router.get("/{repair_id}", response_model=ApiResponse[RepairResponse])
 async def get_repair(
     repair_id: UUID,
@@ -85,5 +93,5 @@ async def get_repairs_by_status(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)):
     repair_service = RepairService(db)
-    
+
     return await repair_service.get_repairs_by_status(status_id)

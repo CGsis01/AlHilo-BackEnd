@@ -1,11 +1,12 @@
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import joinedload, selectinload
 from uuid import UUID
 from app.models.repair import Repair
 from app.models.repair_item import RepairItem
 from app.models.repair_type import RepairType
+from app.models.repair_status import RepairStatus
 from app.repositories.base import BaseRepository
 
 class RepairRepository(BaseRepository[Repair]):
@@ -87,3 +88,15 @@ class RepairRepository(BaseRepository[Repair]):
             self._query_with_relations().filter(Repair.repair_status_id == status_id))
         
         return list(result.scalars().all())
+
+    async def get_estimated_time(self) -> int:
+        subquery = select(RepairStatus.repair_status_id).where(RepairStatus.name == 'Pendiente').scalar_subquery()
+        
+        results = await self.db.execute(
+            select(func.sum(RepairType.estimated_time))
+            .select_from(Repair)
+                .join(RepairItem, Repair.id == RepairItem.repair_id)
+                .join(RepairType, RepairItem.repair_type_id == RepairType.id)
+            .where(Repair.repair_status_id == subquery))
+
+        return results.scalar_one_or_none() or 0;
