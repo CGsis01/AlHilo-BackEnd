@@ -111,7 +111,7 @@ class ClientService:
         
         return response
     
-    async def search_clients(self, store_id: UUID) -> ApiResponse[List[ClientResponse]]:
+    async def search_clients(self, store_id: UUID | None = None) -> ApiResponse[List[ClientResponse]]:
         response = ApiResponse[List[ClientResponse]](
             status=200,
             message="Clients retrieved successfully",

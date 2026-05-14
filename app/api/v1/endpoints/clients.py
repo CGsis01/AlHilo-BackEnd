@@ -52,7 +52,7 @@ async def get_client_by_phone(
 
 @router.get("/", response_model=ApiResponse[List[ClientResponse]])
 async def search_clients(
-    store_id: UUID = Query(..., description="Store ID to which the clients belong"),
+    store_id: UUID = Query(None, description="Store ID to which the clients belong"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)):
     client_service = ClientService(db)
