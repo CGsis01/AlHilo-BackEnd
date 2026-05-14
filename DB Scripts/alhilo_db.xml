@@ -1410,4 +1410,23 @@
             baseTableName="repair_comments" 
             constraintName="fk_repair_comments_created_by" />
     </changeSet>
+
+    <!-- ========================================== -->
+    <!-- CHANGESET 24: Drop not null constraint     -->
+    <!-- ========================================== -->
+    <changeSet id="C024" author="CIOC">
+        <comment>Drop not null constraint in contact phone from clients table</comment>
+
+        <dropNotNullConstraint 
+            tableName="clients" 
+            columnName="contact_phone" 
+            columnDataType="VARCHAR(20)"/>
+
+        <rollback>
+            <addNotNullConstraint 
+                tableName="clients" 
+                columnName="contact_phone" 
+                columnDataType="VARCHAR(20)"/>
+        </rollback>
+    </changeSet>
 </databaseChangeLog>
