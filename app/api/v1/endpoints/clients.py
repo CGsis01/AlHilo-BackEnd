@@ -40,7 +40,7 @@ async def get_client(
     
     return await client_service.get_client(client_id, store_id)
 
-@router.get("/by-phone/{phone}", response_model=ApiResponse[ClientResponse])
+@router.get("/by-phone/{phone}", response_model=ApiResponse[List[ClientResponse]])
 async def get_client_by_phone(
     phone: str,
     store_id: UUID = Query(..., description="Store ID to which the client belongs"),

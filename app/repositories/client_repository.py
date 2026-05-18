@@ -30,12 +30,13 @@ class ClientRepository(BaseRepository[Client]):
         
         return list(result.scalars().all())
     
-    async def get_by_phone(self, phone: str, store_id: UUID) -> Client:
+    async def get_by_phone(self, phone: str, store_id: UUID) -> List[Client]:
         result = await self.db.execute(
             select(Client).options(selectinload(Client.store)).filter(
-                ((Client.personal_phone == phone) | (Client.contact_phone == phone)) & (Client.store_id == store_id)))
+                ((Client.personal_phone == phone) | (Client.contact_phone == phone)) 
+                & (Client.store_id == store_id)))
         
-        return result.scalars().first()
+        return list(result.scalars().all())
     
     async def search_by_name(self, name: str) -> List[Client]:
         result = await self.db.execute(

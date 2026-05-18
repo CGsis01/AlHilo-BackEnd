@@ -87,23 +87,23 @@ class ClientService:
         
         return response
     
-    async def get_client_by_phone(self, phone: str, store_id: UUID) -> ApiResponse[ClientResponse]:
-        response = ApiResponse[ClientResponse](
+    async def get_client_by_phone(self, phone: str, store_id: UUID) -> ApiResponse[List[ClientResponse]]:
+        response = ApiResponse[List[ClientResponse]](
             status=200,
             message="Client retrieved successfully",
             code="SUCCESS",
-            data=None)
+            data=[])
         
         try:
-            client = await self.client_repository.get_by_phone(phone, store_id)
-            if not client:
+            clients = await self.client_repository.get_by_phone(phone, store_id)
+            if not clients:
                 response.status = 404
                 response.message = "No clients found with the provided phone number"
                 response.code = "CLIENT_NOT_FOUND"
 
                 return response
             
-            response.data = ClientResponse.model_validate(client)
+            response.data = [ClientResponse.model_validate(client) for client in clients]
         except Exception as e:
             response.status = 500
             response.message = str(e)
@@ -116,7 +116,7 @@ class ClientService:
             status=200,
             message="Clients retrieved successfully",
             code="SUCCESS",
-            data=None)
+            data=[])
         
         try:
             clients = await self.client_repository.get_all(store_id=store_id)
