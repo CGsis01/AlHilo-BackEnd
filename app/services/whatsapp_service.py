@@ -60,3 +60,65 @@ class WhatsappService:
             return {"success": False, "message_sid": None, "error": str(e)}
         except Exception as e:
             return {"success": False, "message_sid": None, "error": str(e)}
+
+    async def send_advance_payment_pdf(
+        self,
+        phone: str,
+        customer_name: str,
+        repair_id: str,
+        pdf_url: str
+    ) -> dict:
+        if not settings.TWILIO_ACCOUNT_SID or not settings.TWILIO_AUTH_TOKEN:
+            return {"success": False, "message_sid": None, "error": "Twilio credentials not configured"}
+
+        to_number = self._format_phone(phone)
+        body = f"Hola {customer_name}, adjunto encontrarás el comprobante de anticipo de tu reparación (Folio: {repair_id}). ¡Gracias por confiar en Al Hilo!"
+
+        print(f"[WhatsApp DEBUG] FROM: {settings.TWILIO_WHATSAPP_FROM}")
+        print(f"[WhatsApp DEBUG] TO: {to_number}")
+        print(f"[WhatsApp DEBUG] SID: {settings.TWILIO_ACCOUNT_SID[:8]}...")
+
+        try:
+            client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+            message = client.messages.create(
+                body=body,
+                media_url=[pdf_url],
+                from_=settings.TWILIO_WHATSAPP_FROM,
+                to=to_number)
+
+            return {"success": True, "message_sid": message.sid, "error": None}
+        except TwilioRestException as e:
+            return {"success": False, "message_sid": None, "error": str(e)}
+        except Exception as e:
+            return {"success": False, "message_sid": None, "error": str(e)}
+    
+    async def send_complete_payment_pdf(
+        self,
+        phone: str,
+        customer_name: str,
+        repair_id: str,
+        pdf_url: str
+    ) -> dict:
+        if not settings.TWILIO_ACCOUNT_SID or not settings.TWILIO_AUTH_TOKEN:
+            return {"success": False, "message_sid": None, "error": "Twilio credentials not configured"}
+
+        to_number = self._format_phone(phone)
+        body = f"Hola {customer_name}, adjunto encontrarás el comprobante de pago completo de tu reparación (Folio: {repair_id}). ¡Gracias por confiar en Al Hilo!"
+
+        print(f"[WhatsApp DEBUG] FROM: {settings.TWILIO_WHATSAPP_FROM}")
+        print(f"[WhatsApp DEBUG] TO: {to_number}")
+        print(f"[WhatsApp DEBUG] SID: {settings.TWILIO_ACCOUNT_SID[:8]}...")
+
+        try:
+            client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+            message = client.messages.create(
+                body=body,
+                media_url=[pdf_url],
+                from_=settings.TWILIO_WHATSAPP_FROM,
+                to=to_number)
+
+            return {"success": True, "message_sid": message.sid, "error": None}
+        except TwilioRestException as e:
+            return {"success": False, "message_sid": None, "error": str(e)}
+        except Exception as e:
+            return {"success": False, "message_sid": None, "error": str(e)}

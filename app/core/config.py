@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     TWILIO_ACCOUNT_SID: str = ""
     TWILIO_AUTH_TOKEN: str = ""
     TWILIO_WHATSAPP_FROM: str = "whatsapp:+14155238886"  # Twilio sandbox default
+
+    # Vercel Blob
+    BLOB_READ_WRITE_TOKEN: str = ""
     
     class Config:
         env_file = ".env"
