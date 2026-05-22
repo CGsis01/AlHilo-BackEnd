@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, File, Query, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 from uuid import UUID
@@ -35,3 +35,29 @@ async def get_payments(
         filters['client_id'] = client_id
     
     return await payment_service.get_payments(filters)
+
+@router.post("/{repair_id}/Alhilo/anticipo.pdf")
+async def upload_advance_payment_pdf(   
+    repair_id: UUID,
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    payment_service = PaymentService(db)
+    pdf_bytes = await file.read()
+    pdf_url = await payment_service.save_advance_payment_pdf(repair_id, pdf_bytes)
+
+    return ApiResponse(status=200, message="PDF uploaded successfully", code="SUCCESS", data={"url": pdf_url})
+
+@router.post("/{repair_id}/Alhilo/pago-completo.pdf")
+async def upload_complete_payment_pdf(   
+    repair_id: UUID,
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    payment_service = PaymentService(db)
+    pdf_bytes = await file.read()
+    pdf_url = await payment_service.save_advance_payment_pdf(repair_id, pdf_bytes)
+
+    return ApiResponse(status=200, message="PDF uploaded successfully", code="SUCCESS", data={"url": pdf_url})
