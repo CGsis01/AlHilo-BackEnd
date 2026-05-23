@@ -17,6 +17,7 @@ async def add_comment(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)):
     service = RepairCommentService(db)
+    
     return await service.add_comment(comment_data)
 
 @router.get("/{repair_id}", response_model=ApiResponse[List[RepairCommentResponse]])
@@ -25,4 +26,5 @@ async def get_comments(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)):
     service = RepairCommentService(db)
+    
     return await service.get_comments(repair_id)

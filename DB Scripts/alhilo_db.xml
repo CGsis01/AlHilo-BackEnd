@@ -1429,4 +1429,147 @@
                 columnDataType="VARCHAR(20)"/>
         </rollback>
     </changeSet>
+
+    <!-- ========================================== -->
+    <!-- CHANGESET 25: Move assignment from repairs to repair_items -->
+    <!-- ========================================== -->
+    <changeSet id="C025" author="CIOC">
+        <comment>Move seamstress assignment from repair level to repair_item level (per-garment assignment)</comment>
+        
+        <!-- Add assigned_to_id column to repair_items -->
+        <addColumn tableName="repair_items">
+            <column name="assigned_to_id" type="UUID"/>
+        </addColumn>
+
+        <!-- Add foreign key constraint for assigned_to_id in repair_items -->
+        <addForeignKeyConstraint 
+            baseTableName="repair_items"
+            baseColumnNames="assigned_to_id"
+            referencedTableName="users"
+            referencedColumnNames="user_id"
+            constraintName="fk_repair_items_assigned_to_id"
+            onDelete="RESTRICT"
+            onUpdate="NO ACTION"/>
+
+        <!-- Create index for assigned_to_id in repair_items -->
+        <createIndex indexName="idx_repair_items_assigned_to" tableName="repair_items">
+            <column name="assigned_to_id"/>
+        </createIndex>
+
+        <!-- Drop index on repairs.assigned_to_id -->
+        <dropIndex indexName="idx_repairs_assigned_to" tableName="repairs"/>
+
+        <!-- Drop foreign key constraint from repairs -->
+        <dropForeignKeyConstraint 
+            baseTableName="repairs" 
+            constraintName="fk_repairs_assigned_to_id"/>
+
+        <!-- Drop assigned_to_id column from repairs -->
+        <dropColumn tableName="repairs" columnName="assigned_to_id"/>
+
+        <rollback>
+            <!-- Add assigned_to_id column back to repairs -->
+            <addColumn tableName="repairs">
+                <column name="assigned_to_id" type="UUID"/>
+            </addColumn>
+
+            <!-- Add foreign key constraint back -->
+            <addForeignKeyConstraint 
+                baseTableName="repairs"
+                baseColumnNames="assigned_to_id"
+                referencedTableName="users"
+                referencedColumnNames="user_id"
+                constraintName="fk_repairs_assigned_to_id"
+                onDelete="RESTRICT"
+                onUpdate="NO ACTION"/>
+
+            <!-- Recreate index -->
+            <createIndex indexName="idx_repairs_assigned_to" tableName="repairs">
+                <column name="assigned_to_id"/>
+            </createIndex>
+
+            <!-- Drop foreign key from repair_items -->
+            <dropForeignKeyConstraint 
+                baseTableName="repair_items" 
+                constraintName="fk_repair_items_assigned_to_id"/>
+
+            <!-- Drop index from repair_items -->
+            <dropIndex indexName="idx_repair_items_assigned_to" tableName="repair_items"/>
+
+            <!-- Drop assigned_to_id column from repair_items -->
+            <dropColumn tableName="repair_items" columnName="assigned_to_id"/>
+        </rollback>
+    </changeSet>
+
+    <!-- ========================================== -->
+    <!-- CHANGESET 26: Item-level repair status     -->
+    <!-- ========================================== -->
+    <changeSet id="C026" author="CIOC">
+        <comment>Add repair_status_id to repair_items for per-item status tracking</comment>
+
+        <addColumn tableName="repair_items">
+            <column name="repair_status_id" type="UUID"/>
+        </addColumn>
+
+        <sql>
+            UPDATE repair_items ri
+            SET repair_status_id = r.repair_status_id
+            FROM repairs r
+            WHERE ri.repair_id = r.repair_id
+              AND ri.repair_status_id IS NULL;
+        </sql>
+
+        <addForeignKeyConstraint
+            baseTableName="repair_items"
+            baseColumnNames="repair_status_id"
+            referencedTableName="repair_status"
+            referencedColumnNames="repair_status_id"
+            constraintName="fk_repair_items_repair_status_id"
+            onDelete="RESTRICT"
+            onUpdate="NO ACTION"/>
+
+        <createIndex indexName="idx_repair_items_repair_status" tableName="repair_items">
+            <column name="repair_status_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex indexName="idx_repair_items_repair_status" tableName="repair_items"/>
+            <dropForeignKeyConstraint
+                baseTableName="repair_items"
+                constraintName="fk_repair_items_repair_status_id"/>
+            <dropColumn tableName="repair_items" columnName="repair_status_id"/>
+        </rollback>
+    </changeSet>
+
+    <!-- ========================================== -->
+    <!-- CHANGESET 27: attended by in repair item   -->
+    <!-- ========================================== -->
+    <changeSet id="C027" author="CIOC">
+        <comment>Add attended_by_id to repair_items for per-item attendance tracking</comment>
+
+        <addColumn tableName="repair_items">
+            <column name="attended_by_id" type="UUID"/>
+        </addColumn>
+
+        <addForeignKeyConstraint
+            baseTableName="repair_items"
+            baseColumnNames="attended_by_id"
+            referencedTableName="users"
+            referencedColumnNames="user_id"
+            constraintName="fk_repair_items_attended_by_id"
+            onDelete="RESTRICT"
+            onUpdate="NO ACTION"/>
+
+        <createIndex indexName="idx_repair_items_attended_by_id" tableName="repair_items">
+            <column name="attended_by_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex indexName="idx_repair_items_attended_by_id" tableName="repair_items"/>
+            <dropForeignKeyConstraint
+                baseTableName="repair_items"
+                constraintName="fk_repair_items_attended_by_id"/>
+            <dropColumn tableName="repair_items" columnName="attended_by_id"/>
+        </rollback>
+    </changeSet>
 </databaseChangeLog>

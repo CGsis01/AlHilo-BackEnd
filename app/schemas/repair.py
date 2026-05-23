@@ -33,7 +33,6 @@ class RepairBase(BaseModel):
 
 class RepairCreate(RepairBase):
     repair_status_id: UUID
-    assigned_to_id: Optional[UUID] = None
     repair_items: list[RepairItemCreate]
     created_by: UUID
 
@@ -46,7 +45,6 @@ class RepairUpdate(BaseModel):
     estimated_price: Optional[Decimal] = None
     advance_payment: Optional[Decimal] = None
     final_price: Optional[Decimal] = None
-    assigned_to_id: Optional[UUID] = None
     received_date: Optional[datetime] = None
     estimated_delivery_date: Optional[datetime] = None
     actual_delivery_date: Optional[datetime] = None
@@ -73,15 +71,30 @@ class AssignRepair(BaseModel):
     assigned_to_id: UUID
     updated_by: UUID
 
+class AssignRepairItem(BaseModel):
+    repair_item_id: UUID
+    assigned_to_id: Optional[UUID] = None  # None to unassign
+    attended_by_id: Optional[UUID] = None  # None to unassign
+    updated_by: UUID
+
+class AssignRepairGarments(BaseModel):
+    repair_id: UUID
+    assignments: list[AssignRepairItem]
+    updated_by: UUID
+
 class UpdateStatus(BaseModel):
     repair_id: UUID
+    repair_status_id: UUID
+    updated_by: UUID
+
+class UpdateRepairItemStatus(BaseModel):
+    repair_item_id: UUID
     repair_status_id: UUID
     updated_by: UUID
 
 class RepairResponse(RepairBase):
     id: UUID
     repair_status: RepairStatusResponse
-    assigned_to: Optional[UserResponse] = None
     repair_items: list[RepairItemResponse]
     created_by_user: Optional[UserResponse] = None
     is_active: bool

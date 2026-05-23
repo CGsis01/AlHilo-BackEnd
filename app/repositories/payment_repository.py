@@ -2,7 +2,6 @@ from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload, selectinload
-from uuid import UUID
 from app.models.payment import Payment
 from app.models.repair import Repair
 from app.models.repair_type import RepairType
@@ -17,12 +16,13 @@ class PaymentRepository(BaseRepository[Payment]):
         return (
             select(Payment).options(
                 joinedload(Payment.repair).joinedload(Repair.repair_status),
-                joinedload(Payment.repair).joinedload(Repair.assigned_to),
                 joinedload(Payment.repair).joinedload(Repair.created_by_user),
                 joinedload(Payment.repair).selectinload(
                     Repair.repair_items).options(
                     selectinload(RepairItem.garment),
-                    selectinload(RepairItem.repair_type).selectinload(RepairType.repair_complexity)
+                    selectinload(RepairItem.repair_type).selectinload(RepairType.repair_complexity),
+                    selectinload(RepairItem.assigned_to),
+                    selectinload(RepairItem.attended_by),
                 ),
                 joinedload(Payment.payment_type),
                 joinedload(Payment.created_by_user),

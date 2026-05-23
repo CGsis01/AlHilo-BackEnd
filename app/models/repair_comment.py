@@ -9,7 +9,7 @@ class RepairComment(BaseModel):
     id = Column('repair_comment_id', UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     repair_id = Column(UUID(as_uuid=True), ForeignKey("repairs.repair_id"), nullable=False)
     comment = Column(Text, nullable=False)
-    updated_comment = Column(Text)
+    updated_comment = Column('updatedComment', Text)
     created_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=False)
 
     repair = relationship("Repair", back_populates="comments")

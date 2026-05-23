@@ -34,6 +34,14 @@ async def get_users(
     
     return await user_service.get_users(filters)
 
+@router.get('/unassigned-seamstresses', response_model=ApiResponse[List[UserResponse]])
+async def get_unassigned_seamstresses_and_headsewing(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)) -> ApiResponse[List[UserResponse]]:
+    user_service = UserService(db)
+    
+    return await user_service.get_unassigned_seamstresses_and_headsewing()
+
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(
     current_user: User = Depends(get_current_active_user)) -> UserResponse:

@@ -17,7 +17,6 @@ class Repair(BaseModel):
     estimated_price = Column(Numeric(10, 2), nullable=False)
     advance_payment = Column(Numeric(10, 2))
     final_price = Column(Numeric(10, 2))
-    assigned_to_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
     created_by = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=False)
     received_date = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     estimated_delivery_date = Column(DateTime(timezone=True), nullable=False)
@@ -27,7 +26,6 @@ class Repair(BaseModel):
     
     client = relationship("Client", back_populates="repairs")
     repair_status = relationship("RepairStatus", back_populates="repairs")
-    assigned_to = relationship("User", foreign_keys=[assigned_to_id], back_populates="assigned_repairs")
     created_by_user = relationship("User", foreign_keys=[created_by], back_populates="created_repairs")
     repair_items = relationship(RepairItem, back_populates="repair", cascade="all, delete-orphan")
     payments = relationship("Payment", back_populates="repair", cascade="all, delete-orphan")

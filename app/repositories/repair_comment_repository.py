@@ -18,17 +18,18 @@ class RepairCommentRepository(BaseRepository[RepairComment]):
                 joinedload(RepairComment.author)
                 .joinedload(User.role),
                 joinedload(RepairComment.author)
-                .joinedload(User.store)
-            )
+                .joinedload(User.store))
             .filter(RepairComment.repair_id == repair_id)
-            .order_by(RepairComment.created_at.desc())
-        )
+            .order_by(RepairComment.created_at.desc()))
+        
         return list(result.scalars().all())
 
     async def create_comment(self, obj_in: dict) -> RepairComment:
         data = dict(obj_in)
         db_obj = RepairComment(**data)
+        
         self.db.add(db_obj)
+        
         await self.db.commit()
         await self.db.refresh(db_obj)
 
@@ -38,8 +39,7 @@ class RepairCommentRepository(BaseRepository[RepairComment]):
                 joinedload(RepairComment.author)
                 .joinedload(User.role),
                 joinedload(RepairComment.author)
-                .joinedload(User.store)
-            )
-            .filter(RepairComment.id == db_obj.id)
-        )
+                .joinedload(User.store))
+            .filter(RepairComment.id == db_obj.id))
+        
         return result.scalar_one()
