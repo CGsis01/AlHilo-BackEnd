@@ -17,13 +17,13 @@ class RepairRepository(BaseRepository[Repair]):
         return (
             select(Repair).options(
                 joinedload(Repair.repair_status),
-                joinedload(Repair.assigned_to),
                 joinedload(Repair.created_by_user),
                 selectinload(Repair.repair_items).options(
                     joinedload(RepairItem.repair_type).joinedload(RepairType.repair_complexity), 
-                    joinedload(RepairItem.garment))
-            )
-        )
+                    joinedload(RepairItem.repair_status),
+                    joinedload(RepairItem.garment),
+                    joinedload(RepairItem.assigned_to),
+                    joinedload(RepairItem.attended_by))))
 
     async def get_by_id_with_relations(self, id: UUID) -> Optional[Repair]:
         result = await self.db.execute(
@@ -35,13 +35,27 @@ class RepairRepository(BaseRepository[Repair]):
         query = self._query_with_relations()
         
         if filters:
+            assigned_to_id = filters.get("assigned_to_id")
+            if assigned_to_id is not None:
+                assigned_to_uuid = assigned_to_id if isinstance(assigned_to_id, UUID) else UUID(str(assigned_to_id))
+                
+                query = query.filter(
+                    Repair.repair_items.any(RepairItem.assigned_to_id == assigned_to_uuid))
+
             for field, value in filters.items():
-                if value is not None:
+                if value is None or field == "assigned_to_id":
+                    continue
+
+                if hasattr(Repair, field):
                     query = query.filter(getattr(Repair, field) == value)
+                elif hasattr(RepairItem, field):
+                    query = query.filter(
+                        Repair.repair_items.any(getattr(RepairItem, field) == value)
+                    )
         
         result = await self.db.execute(query)
 
-        return list(result.scalars().all())
+        return list(result.scalars().unique().all())
 
     async def create(self, obj_in: dict) -> Repair:
         db_obj = Repair(**obj_in)

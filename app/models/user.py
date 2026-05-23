@@ -20,6 +20,7 @@ class User(BaseModel):
     
     role = relationship(Role, backref="users", lazy="joined")
     store = relationship(Store, backref="users", lazy="joined")
-    assigned_repairs = relationship(Repair, foreign_keys=[Repair.assigned_to_id], back_populates="assigned_to")
+    assigned_repair_items = relationship("RepairItem", foreign_keys="RepairItem.assigned_to_id", back_populates="assigned_to")
+    attended_repair_items = relationship("RepairItem", foreign_keys="RepairItem.attended_by_id", back_populates="attended_by")
     created_repairs = relationship(Repair, foreign_keys=[Repair.created_by], back_populates="created_by_user")
     created_payments = relationship("Payment", foreign_keys=[Payment.created_by], back_populates="created_by_user")

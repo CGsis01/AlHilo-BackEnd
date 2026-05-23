@@ -5,6 +5,7 @@ from uuid import UUID
 from app.models.user import User
 from app.models.role import Role
 from app.models.store import Store
+from app.models.repair_item import RepairItem
 from app.repositories.base import BaseRepository
 from app.schemas.user import UserFilters
 
@@ -81,6 +82,18 @@ class UserRepository(BaseRepository[User]):
                     or_(
                         User.name.ilike(search_filter),
                         User.email.ilike(search_filter)))
+        
+        result = await self.db.execute(query)
+        
+        return list(result.scalars().all())
+
+    async def get_unassigned_seamstresses_and_headsewing(self) -> List[User]:
+        query = (select(User)
+                 .join(Role, User.role_id == Role.id)
+                 .outerjoin(RepairItem, User.id == RepairItem.assigned_to_id)
+                 .where(Role.code.in_(['Seamstress', 'HeadSewing']))
+                 .where(User.is_active == True)
+                 .where(RepairItem.id == None))
         
         result = await self.db.execute(query)
         

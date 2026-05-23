@@ -10,3 +10,4 @@ class RepairStatus(BaseModel):
     name = Column(String(25), nullable=False)
     
     repairs = relationship("Repair", back_populates="repair_status")
+    repair_items = relationship("RepairItem", back_populates="repair_status")

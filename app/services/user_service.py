@@ -57,6 +57,27 @@ class UserService:
         
         return response
 
+    async def get_unassigned_seamstresses_and_headsewing(self) -> ApiResponse[List[UserResponse]]:
+        response = ApiResponse[List[UserResponse]](
+            status=200,
+            message="Users retrieved successfully",
+            code="SUCCESS",
+            data=[])
+        
+        try:
+            users = await self.user_repository.get_unassigned_seamstresses_and_headsewing()
+            
+            if users is not None:
+                response.data = [UserResponse.model_validate(user) for user in users]
+            
+            return response
+        except Exception as e:
+            response.status = 500
+            response.message = str(e)
+            response.code = "USER_RETRIEVAL_ERROR"
+        
+        return response
+
     async def create_user(self, user_data: UserCreate) -> ApiResponse[UserResponse]:
         response = ApiResponse[UserResponse](
             status=200,
