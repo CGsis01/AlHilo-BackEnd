@@ -5,6 +5,7 @@ from sqlalchemy.orm import joinedload, selectinload
 from uuid import UUID
 from app.models.repair import Repair
 from app.models.repair_item import RepairItem
+from app.models.repair_item_repair_type import RepairItemRepairType
 from app.models.repair_type import RepairType
 from app.models.repair_status import RepairStatus
 from app.repositories.base import BaseRepository
@@ -19,7 +20,7 @@ class RepairRepository(BaseRepository[Repair]):
                 joinedload(Repair.repair_status),
                 joinedload(Repair.created_by_user),
                 selectinload(Repair.repair_items).options(
-                    joinedload(RepairItem.repair_type).joinedload(RepairType.repair_complexity), 
+                    joinedload(RepairItem.repair_item_repair_types).joinedload(RepairItemRepairType.repair_type).joinedload(RepairType.repair_complexity),
                     joinedload(RepairItem.repair_status),
                     joinedload(RepairItem.garment),
                     joinedload(RepairItem.assigned_to),
@@ -29,7 +30,7 @@ class RepairRepository(BaseRepository[Repair]):
         result = await self.db.execute(
             self._query_with_relations().filter(Repair.id == id))
 
-        return result.scalar_one_or_none()
+        return result.unique().scalar_one_or_none()
 
     async def get_all_filtered(self, filters: Optional[dict] = None) -> List[Repair]:
         query = self._query_with_relations()
@@ -71,7 +72,7 @@ class RepairRepository(BaseRepository[Repair]):
         result = await self.db.execute(
             self._query_with_relations().filter(Repair.id == repair_id))
 
-        return result.scalar_one()
+        return result.unique().scalar_one()
     
     async def update(self, id: UUID, obj_in: dict) -> Optional[Repair]:
         result = await self.db.execute(select(self.model).filter(self.model.id == id))
@@ -89,19 +90,19 @@ class RepairRepository(BaseRepository[Repair]):
         result = await self.db.execute(
             self._query_with_relations().filter(Repair.id == id))
 
-        return result.scalar_one()
+        return result.unique().scalar_one()
 
     async def get_by_client(self, client_id: UUID) -> List[Repair]:
         result = await self.db.execute(
             self._query_with_relations().filter(Repair.client_id == client_id))
         
-        return list(result.scalars().all())
+        return list(result.scalars().unique().all())
     
     async def get_by_status(self, status_id: UUID) -> List[Repair]:
         result = await self.db.execute(
             self._query_with_relations().filter(Repair.repair_status_id == status_id))
         
-        return list(result.scalars().all())
+        return list(result.scalars().unique().all())
 
     async def get_estimated_time(self) -> int:
         subquery = select(RepairStatus.repair_status_id).where(RepairStatus.name == 'Pendiente').scalar_subquery()
@@ -110,7 +111,8 @@ class RepairRepository(BaseRepository[Repair]):
             select(func.sum(RepairType.estimated_time))
             .select_from(Repair)
                 .join(RepairItem, Repair.id == RepairItem.repair_id)
-                .join(RepairType, RepairItem.repair_type_id == RepairType.id)
+                .join(RepairItemRepairType, RepairItem.id == RepairItemRepairType.repair_item_id)
+                .join(RepairType, RepairItemRepairType.repair_type_id == RepairType.id)
             .where(Repair.repair_status_id == subquery))
 
         return results.scalar_one_or_none() or 0;

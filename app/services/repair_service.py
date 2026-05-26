@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from uuid import UUID
 from app.models.repair_item import RepairItem
+from app.models.repair_item_repair_type import RepairItemRepairType
 from app.models.repair_status import RepairStatus
 from app.repositories.repair_repository import RepairRepository
 from app.repositories.repair_item_repository import RepairItemRepository
@@ -204,10 +205,22 @@ class RepairService:
             if repair_items:
                 for repair_item in repair_items:
                     item_data = dict(repair_item)
+                    repair_types_data = item_data.pop("repair_types", [])
                     item_data["repair_id"] = repair.id
                     item_data["repair_status_id"] = item_data.get("repair_status_id") or repair.repair_status_id
                     item_data["created_by"] = item_data.get("created_by") or repair.created_by
-                    self.db.add(RepairItem(**item_data))
+                    new_item = RepairItem(**item_data)
+                    self.db.add(new_item)
+                    await self.db.flush()
+
+                    for i, rt in enumerate(repair_types_data):
+                        self.db.add(RepairItemRepairType(
+                            repair_item_id=new_item.id,
+                            repair_type_id=rt["repair_type_id"],
+                            price=rt["price"],
+                            sort_order=i,
+                            created_by=repair.created_by
+                        ))
 
                 await self.db.commit()
                 await self.db.refresh(repair)
@@ -249,6 +262,7 @@ class RepairService:
                 for repair_item in repair_items:
                     item_data = dict(repair_item)
                     repair_item_id = item_data.pop("repair_item_id", None)
+                    repair_types_data = item_data.pop("repair_types", [])
                     item_data["repair_id"] = repair.id
 
                     if repair_item_id and repair_item_id in existing_items:
@@ -257,11 +271,34 @@ class RepairService:
                             if value is not None and field != "repair_id":
                                 setattr(db_item, field, value)
                         db_item.updated_by = update_dict.get("updated_by")
+                        if repair_types_data:
+                            await self.db.flush()
+                            for rt_row in list(db_item.repair_item_repair_types):
+                                await self.db.delete(rt_row)
+                            await self.db.flush()
+                            for i, rt in enumerate(repair_types_data):
+                                self.db.add(RepairItemRepairType(
+                                    repair_item_id=db_item.id,
+                                    repair_type_id=rt["repair_type_id"],
+                                    price=rt["price"],
+                                    sort_order=i,
+                                    updated_by=update_dict.get("updated_by")
+                                ))
                         continue
 
                     item_data["created_by"] = item_data.get("created_by") or update_dict.get("updated_by")
                     item_data["repair_status_id"] = item_data.get("repair_status_id") or repair.repair_status_id
-                    self.db.add(RepairItem(**item_data))
+                    new_item = RepairItem(**item_data)
+                    self.db.add(new_item)
+                    await self.db.flush()
+                    for i, rt in enumerate(repair_types_data):
+                        self.db.add(RepairItemRepairType(
+                            repair_item_id=new_item.id,
+                            repair_type_id=rt["repair_type_id"],
+                            price=rt["price"],
+                            sort_order=i,
+                            created_by=update_dict.get("updated_by")
+                        ))
              
             await self.db.commit()
             repair = await self.repair_repository.get_by_id_with_relations(repair_id)

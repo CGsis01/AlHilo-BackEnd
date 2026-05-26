@@ -15,7 +15,6 @@ class RepairType(BaseModel):
     repair_complexity_id = Column(UUID(as_uuid=True), ForeignKey("repair_complexities.repair_complexity_id"), nullable=True)
     store_id = Column(UUID(as_uuid=True), ForeignKey("stores.store_id"), nullable=False)
     
-    repair_items = relationship("RepairItem", back_populates="repair_type")
     garment_repair_types = relationship("GarmentRepairType", back_populates="repair_type")
     repair_complexity = relationship("RepairComplexity", back_populates="repair_type")
     repair_type_materials = relationship("RepairTypeMaterial", back_populates="repair_type")    

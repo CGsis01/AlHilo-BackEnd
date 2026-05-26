@@ -4,6 +4,7 @@ from app.models.repair_type import RepairType
 from app.models.repair_type_material import RepairTypeMaterial
 from app.models.repair_complexity import RepairComplexity
 from app.models.repair_item import RepairItem
+from app.models.repair_item_repair_type import RepairItemRepairType
 from app.models.role import Role
 from app.models.repair import Repair
 from app.models.user import User
@@ -18,6 +19,7 @@ __all__ = [
     "RepairTypeMaterial",
     "RepairComplexity",
     "RepairItem",
+    "RepairItemRepairType",
     "Role",
     "Repair",
     "User",

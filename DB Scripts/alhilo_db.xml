@@ -1572,4 +1572,108 @@
             <dropColumn tableName="repair_items" columnName="attended_by_id"/>
         </rollback>
     </changeSet>
+
+    <!-- ========================================================== -->
+    <!-- CHANGESET 28: Multiple repair types per repair item        -->
+    <!-- ========================================================== -->
+    <changeSet id="C028" author="CIOC">
+        <comment>Replace single repair_type_id on repair_items with a junction table repair_item_repair_types to support multiple repair types per garment item</comment>
+
+        <!-- Create junction table -->
+        <createTable tableName="repair_item_repair_types">
+            <column name="repair_item_repair_type_id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="repair_item_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="repair_type_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="price" type="DECIMAL(10,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sort_order" type="INTEGER"/>
+            <column name="is_active" type="BOOLEAN" defaultValue="true"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()"/>
+            <column name="created_by" type="UUID"/>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()"/>
+            <column name="updated_by" type="UUID"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="repair_item_repair_types"
+            baseColumnNames="repair_item_id"
+            referencedTableName="repair_items"
+            referencedColumnNames="repair_item_id"
+            constraintName="fk_rirt_repair_item_id"
+            onDelete="CASCADE"
+            onUpdate="NO ACTION"/>
+
+        <addForeignKeyConstraint
+            baseTableName="repair_item_repair_types"
+            baseColumnNames="repair_type_id"
+            referencedTableName="repair_types"
+            referencedColumnNames="repair_type_id"
+            constraintName="fk_rirt_repair_type_id"
+            onDelete="RESTRICT"
+            onUpdate="NO ACTION"/>
+
+        <createIndex indexName="idx_rirt_repair_item_id" tableName="repair_item_repair_types">
+            <column name="repair_item_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_rirt_repair_type_id" tableName="repair_item_repair_types">
+            <column name="repair_type_id"/>
+        </createIndex>
+
+        <!-- Migrate existing data: one row per existing repair_item with its repair_type_id and price -->
+        <sql>
+            INSERT INTO repair_item_repair_types (repair_item_id, repair_type_id, price, sort_order, created_by)
+            SELECT repair_item_id, repair_type_id, price, 0, created_by
+            FROM repair_items
+            WHERE repair_type_id IS NOT NULL;
+        </sql>
+
+        <!-- Drop old FK and column -->
+        <dropIndex indexName="idx_repair_item_repair_type" tableName="repair_items"/>
+
+        <dropForeignKeyConstraint
+            baseTableName="repair_items"
+            constraintName="fk_repair_item_repair_type_id"/>
+
+        <dropColumn tableName="repair_items" columnName="repair_type_id"/>
+
+        <rollback>
+            <addColumn tableName="repair_items">
+                <column name="repair_type_id" type="UUID"/>
+            </addColumn>
+
+            <sql>
+                UPDATE repair_items ri
+                SET repair_type_id = (
+                    SELECT rirt.repair_type_id
+                    FROM repair_item_repair_types rirt
+                    WHERE rirt.repair_item_id = ri.repair_item_id
+                    ORDER BY rirt.sort_order
+                    LIMIT 1
+                );
+            </sql>
+
+            <addForeignKeyConstraint
+                baseTableName="repair_items"
+                baseColumnNames="repair_type_id"
+                referencedTableName="repair_types"
+                referencedColumnNames="repair_type_id"
+                constraintName="fk_repair_item_repair_type_id"
+                onDelete="RESTRICT"
+                onUpdate="NO ACTION"/>
+
+            <createIndex indexName="idx_repair_item_repair_type" tableName="repair_items">
+                <column name="repair_type_id"/>
+            </createIndex>
+
+            <dropTable tableName="repair_item_repair_types"/>
+        </rollback>
+    </changeSet>
 </databaseChangeLog>

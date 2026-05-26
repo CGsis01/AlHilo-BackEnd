@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload, selectinload
 from app.models.payment import Payment
 from app.models.repair import Repair
+from app.models.repair_item_repair_type import RepairItemRepairType
 from app.models.repair_type import RepairType
 from app.models.repair_item import RepairItem
 from app.repositories.base import BaseRepository
@@ -20,7 +21,7 @@ class PaymentRepository(BaseRepository[Payment]):
                 joinedload(Payment.repair).selectinload(
                     Repair.repair_items).options(
                     selectinload(RepairItem.garment),
-                    selectinload(RepairItem.repair_type).selectinload(RepairType.repair_complexity),
+                    selectinload(RepairItem.repair_item_repair_types).selectinload(RepairItemRepairType.repair_type).selectinload(RepairType.repair_complexity),
                     selectinload(RepairItem.assigned_to),
                     selectinload(RepairItem.attended_by),
                 ),
@@ -39,7 +40,7 @@ class PaymentRepository(BaseRepository[Payment]):
         
         result = await self.db.execute(query)
 
-        return list(result.scalars().all())
+        return list(result.scalars().unique().all())
 
     async def create(self, obj_in: dict) -> Payment:
         db_obj = Payment(**obj_in)
@@ -55,4 +56,4 @@ class PaymentRepository(BaseRepository[Payment]):
         result = await self.db.execute(
             self._query_with_relations().filter(Payment.id == payment_id))
 
-        return result.scalar_one()
+        return result.unique().scalar_one()

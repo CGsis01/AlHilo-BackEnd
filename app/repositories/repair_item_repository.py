@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from uuid import UUID
 from app.models.repair_item import RepairItem
+from app.models.repair_item_repair_type import RepairItemRepairType
 from app.models.repair_type import RepairType
 from app.models.garment import Garment
 from app.models.repair_status import RepairStatus
@@ -21,7 +22,7 @@ class RepairItemRepository(BaseRepository[RepairItem]):
     def _query_with_relations(self):
         return (
             select(RepairItem).options(
-                joinedload(RepairItem.repair_type).joinedload(RepairType.repair_complexity),
+                joinedload(RepairItem.repair_item_repair_types).joinedload(RepairItemRepairType.repair_type).joinedload(RepairType.repair_complexity),
                 joinedload(RepairItem.repair_status),
                 joinedload(RepairItem.garment),
                 joinedload(RepairItem.assigned_to)
@@ -32,20 +33,20 @@ class RepairItemRepository(BaseRepository[RepairItem]):
         result = await self.db.execute(
             self._query_with_relations().filter(RepairItem.id == id))
         
-        return result.scalar_one_or_none()
+        return result.unique().scalar_one_or_none()
 
     async def get_by_repair_id(self, repair_id: UUID) -> List[RepairItem]:
         result = await self.db.execute(
             self._query_with_relations().filter(RepairItem.repair_id == repair_id))
         
-        return list(result.scalars().all())
+        return list(result.scalars().unique().all())
 
     async def get_by_assigned_to(self, assigned_to_id: UUID) -> List[RepairItem]:
         """Get all repair items assigned to a seamstress"""
         result = await self.db.execute(
             self._query_with_relations().filter(RepairItem.assigned_to_id == assigned_to_id))
         
-        return list(result.scalars().all())
+        return list(result.scalars().unique().all())
 
     async def assign(self, repair_item_id: UUID, assigned_to_id: Optional[UUID]) -> Optional[RepairItem]:
         """Assign or unassign a repair item to a seamstress"""

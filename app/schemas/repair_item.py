@@ -14,16 +14,20 @@ class RepairItemBase(BaseModel):
     description: str    
     price: Decimal = Field(validation_alias=AliasChoices("price", "estimated_price"))
 
+class RepairItemRepairTypeCreate(BaseModel):
+    repair_type_id: UUID
+    price: Decimal
+
 class RepairItemCreate(RepairItemBase):
     repair_id: Optional[UUID] = None
-    repair_type_id: UUID
+    repair_types: list[RepairItemRepairTypeCreate]
     repair_status_id: Optional[UUID] = None
     assigned_to_id: Optional[UUID] = None
     created_by: Optional[UUID] = None
 
 class RepairItemUpdate(BaseModel):
     id: Optional[UUID] = None
-    repair_type_id: Optional[UUID] = None
+    repair_types: Optional[list[RepairItemRepairTypeCreate]] = None
     garment_id: Optional[UUID] = None
     description: Optional[str] = None
     price: Optional[Decimal] = None
@@ -32,10 +36,19 @@ class RepairItemUpdate(BaseModel):
     is_active: Optional[bool] = None
     updated_by: UUID
 
+class RepairItemRepairTypeResponse(BaseModel):
+    id: UUID
+    repair_type: RepairTypeResponse
+    price: Decimal
+    sort_order: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
 class RepairItemResponse(RepairItemBase):
     id: UUID
     repair_id: UUID
-    repair_type: RepairTypeResponse
+    repair_item_repair_types: list[RepairItemRepairTypeResponse] = []
     repair_status: Optional[RepairStatusResponse] = None
     garment: GarmentResponse
     repair_status_id: Optional[UUID] = None
