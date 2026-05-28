@@ -1,17 +1,49 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 from uuid import UUID
-from app.core.database import get_db
+from app.core.database import AsyncSessionLocal, get_db
 from app.schemas.api_response import ApiResponse
 from app.schemas.repair import AssignRepairGarments, AssignRepairItem, RepairCreate, RepairUpdate, RepairResponse, UpdateRepairItemStatus, UpdateStatus
 from app.schemas.repair_item import RepairItemResponse
 from app.services.repair_service import RepairService
+from app.services.auth_service import AuthService
+from app.services.repair_realtime_service import repair_realtime_broker
 from app.api.dependencies import get_current_active_user
 from app.models.user import User
 
 router = APIRouter()
+
+@router.websocket("/ws")
+async def repairs_realtime(websocket: WebSocket, token: Optional[str] = Query(default=None)):
+    if not token:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Missing access token")
+        return
+
+    user: Optional[User] = None
+    async with AsyncSessionLocal() as db:
+        auth_service = AuthService(db)
+        try:
+            user = await auth_service.get_current_user(token)
+        except Exception:
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Invalid access token")
+            return
+
+    if user is None:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Unauthorized")
+        return
+
+    await repair_realtime_broker.connect(websocket, user_id=str(user.id), store_id=str(user.store_id))
+
+    try:
+        while True:
+            # Keep the socket alive and allow optional client ping messages.
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        repair_realtime_broker.disconnect(websocket)
+    except Exception:
+        repair_realtime_broker.disconnect(websocket)
 
 @router.post("/", response_model=ApiResponse[RepairResponse])
 async def create_repair(

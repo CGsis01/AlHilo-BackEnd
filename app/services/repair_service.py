@@ -11,6 +11,7 @@ from app.repositories.repair_item_repository import RepairItemRepository
 from app.schemas.api_response import ApiResponse
 from app.schemas.repair import AssignRepairGarments, AssignRepairItem, RepairCreate, RepairUpdate, RepairResponse, UpdateRepairItemStatus, UpdateStatus
 from app.schemas.repair_item import RepairItemResponse
+from app.services.repair_realtime_service import repair_realtime_broker
 from fastapi import HTTPException, status
 
 class RepairService:
@@ -27,10 +28,6 @@ class RepairService:
             if item.repair_status is not None and item.repair_status.name
         }
         
-        print('-*-*-*-*-*-*--*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*--*-*-*-*-*-*-*-*-*-*-*-*-')
-        print('THIS IS item_status_names:', item_status_names)
-        print('-*-*-*-*-*-*--*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*--*-*-*-*-*-*-*-*-*-*-*-*-')
-
         if not item_status_names:
             return repair.repair_status.name if repair.repair_status and repair.repair_status.name else "Pendiente"
 
@@ -91,6 +88,30 @@ class RepairService:
                 repair = await self.repair_repository.get_by_id_with_relations(repair_id)
 
         return RepairResponse.model_validate(repair)
+
+    async def _emit_repair_realtime_event(
+        self,
+        event_type: str,
+        repair: Optional[RepairResponse],
+        updated_by: Optional[UUID] = None,
+        repair_item_id: Optional[UUID] = None,
+        status_id: Optional[UUID] = None,
+    ) -> None:
+        if repair is None:
+            return
+
+        payload = {
+            "event": event_type,
+            "repair_id": str(repair.id),
+            "repair_item_id": str(repair_item_id) if repair_item_id else None,
+            "status_id": str(status_id) if status_id else None,
+            "updated_by": str(updated_by) if updated_by else None,
+            "updated_at": datetime.utcnow().isoformat() + "Z",
+            # Full snapshot included for Phase 2 UI patching without extra HTTP calls.
+            "repair": repair.model_dump(mode="json"),
+        }
+
+        await repair_realtime_broker.broadcast(payload)
 
     async def get_repair_stats(self, date_from: Optional[datetime] = None, date_to: Optional[datetime] = None) -> ApiResponse[Dict[str, Any]]:
         response = ApiResponse[Dict[str, Any]](
@@ -228,6 +249,11 @@ class RepairService:
                 repair = await self.repair_repository.get_by_id_with_relations(UUID(str(repair.id)))
 
             response.data = RepairResponse.model_validate(repair)
+            await self._emit_repair_realtime_event(
+                event_type="repair.created",
+                repair=response.data,
+                updated_by=repair_data.created_by,
+            )
         except Exception as e:
             await self.db.rollback()
             response.status = 500
@@ -347,6 +373,11 @@ class RepairService:
                 return response
 
             response.data = synced_repair
+            await self._emit_repair_realtime_event(
+                event_type="repair.assignment_changed",
+                repair=synced_repair,
+                updated_by=assign_garments_data.updated_by,
+            )
         except Exception as e:
             response.status = 500
             response.message = str(e)
@@ -369,7 +400,16 @@ class RepairService:
                 response.code = "REPAIR_ITEM_NOT_FOUND"
                 
                 return response
-            
+
+            synced_repair = await self._sync_repair_status_from_items(UUID(str(item.repair_id)))
+            if synced_repair:
+                await self._emit_repair_realtime_event(
+                    event_type="repair.assignment_changed",
+                    repair=synced_repair,
+                    updated_by=assignment_data.updated_by,
+                    repair_item_id=repair_item_id,
+                )
+
             response.data = RepairItemResponse.model_validate(item)
         except Exception as e:
             response.status = 500
@@ -423,6 +463,12 @@ class RepairService:
             updated_repair = await self.repair_repository.get_by_id_with_relations(repair_id)
 
             response.data = RepairResponse.model_validate(updated_repair)
+            await self._emit_repair_realtime_event(
+                event_type="repair.status_changed",
+                repair=response.data,
+                updated_by=update_status_data.updated_by,
+                status_id=update_status_data.repair_status_id,
+            )
         except Exception as e:
             response.status = 500
             response.message = str(e)
@@ -455,6 +501,13 @@ class RepairService:
                 return response
 
             response.data = synced_repair
+            await self._emit_repair_realtime_event(
+                event_type="repair.item_status_changed",
+                repair=synced_repair,
+                updated_by=item_status_data.updated_by,
+                repair_item_id=repair_item_id,
+                status_id=item_status_data.repair_status_id,
+            )
         except Exception as e:
             response.status = 500
             response.message = str(e)
