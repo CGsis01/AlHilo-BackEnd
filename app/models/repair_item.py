@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, UUID, Text, Numeric, ForeignKey
+from sqlalchemy import Column, UUID, Text, Numeric, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from app.models.base import BaseModel
 
@@ -14,6 +14,7 @@ class RepairItem(BaseModel):
     attended_by_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=True)
     description = Column(Text, nullable=False)
     price = Column(Numeric(10, 2), nullable=False)
+    is_pattern_source = Column(Boolean, default=False, nullable=False)
     
     repair = relationship("Repair", back_populates="repair_items")
     repair_item_repair_types = relationship(

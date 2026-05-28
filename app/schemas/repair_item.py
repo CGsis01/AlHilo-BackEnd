@@ -13,6 +13,7 @@ class RepairItemBase(BaseModel):
     garment_id: UUID
     description: str    
     price: Decimal = Field(validation_alias=AliasChoices("price", "estimated_price"))
+    is_pattern_source: bool = False
 
 class RepairItemRepairTypeCreate(BaseModel):
     repair_type_id: UUID
@@ -31,6 +32,7 @@ class RepairItemUpdate(BaseModel):
     garment_id: Optional[UUID] = None
     description: Optional[str] = None
     price: Optional[Decimal] = None
+    is_pattern_source: Optional[bool] = None
     repair_status_id: Optional[UUID] = None
     assigned_to_id: Optional[UUID] = None
     is_active: Optional[bool] = None

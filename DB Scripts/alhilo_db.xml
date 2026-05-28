@@ -1676,4 +1676,28 @@
             <dropTable tableName="repair_item_repair_types"/>
         </rollback>
     </changeSet>
+
+    <!-- ========================================================== -->
+    <!-- CHANGESET 29: Pattern source flag in repair items          -->
+    <!-- ========================================================== -->
+    <changeSet id="C029" author="CIOC">
+        <comment>Add is_pattern_source to identify the customer garment used as pattern in a repair order</comment>
+
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="repair_items"/>
+            <not>
+                <columnExists tableName="repair_items" columnName="is_pattern_source"/>
+            </not>
+        </preConditions>
+
+        <addColumn tableName="repair_items">
+            <column name="is_pattern_source" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <rollback>
+            <dropColumn tableName="repair_items" columnName="is_pattern_source"/>
+        </rollback>
+    </changeSet>
 </databaseChangeLog>

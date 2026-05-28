@@ -22,13 +22,15 @@ class RepairService:
         self.repair_item_repository = RepairItemRepository(db)
 
     def _get_aggregate_status_name(self, repair) -> str:
-        item_status_names = {
+        billable_item_status_names = {
             item.repair_status.name
             for item in (repair.repair_items or [])
-            if item.repair_status is not None and item.repair_status.name
+            if item.repair_status is not None
+            and item.repair_status.name
+            and not getattr(item, "is_pattern_source", False)
         }
         
-        if not item_status_names:
+        if not billable_item_status_names:
             return repair.repair_status.name if repair.repair_status and repair.repair_status.name else "Pendiente"
 
         # Priority rules for aggregate status:
@@ -36,13 +38,13 @@ class RepairService:
         # 2) All validated -> validated
         # 3) All pending -> pending
         # 4) Any non-pending item -> in progress
-        if item_status_names == {"Entregada"}:
+        if billable_item_status_names == {"Entregada"}:
             return "Entregada"
-        if item_status_names == {"Validada"}:
+        if billable_item_status_names == {"Validada"}:
             return "Validada"
-        if item_status_names == {"Pendiente"}:
+        if billable_item_status_names == {"Pendiente"}:
             return "Pendiente"
-        if any(status_name != "Pendiente" for status_name in item_status_names):
+        if any(status_name != "Pendiente" for status_name in billable_item_status_names):
             return "En progreso"
 
         return "Pendiente"
@@ -230,15 +232,21 @@ class RepairService:
                     item_data["repair_id"] = repair.id
                     item_data["repair_status_id"] = item_data.get("repair_status_id") or repair.repair_status_id
                     item_data["created_by"] = item_data.get("created_by") or repair.created_by
+
+                    is_pattern_source = bool(item_data.get("is_pattern_source", False))
+                    if is_pattern_source:
+                        item_data["price"] = 0
+
                     new_item = RepairItem(**item_data)
                     self.db.add(new_item)
                     await self.db.flush()
 
                     for i, rt in enumerate(repair_types_data):
+                        rt_price = 0 if is_pattern_source else rt["price"]
                         self.db.add(RepairItemRepairType(
                             repair_item_id=new_item.id,
                             repair_type_id=rt["repair_type_id"],
-                            price=rt["price"],
+                            price=rt_price,
                             sort_order=i,
                             created_by=repair.created_by
                         ))
@@ -291,6 +299,10 @@ class RepairService:
                     repair_types_data = item_data.pop("repair_types", [])
                     item_data["repair_id"] = repair.id
 
+                    is_pattern_source = bool(item_data.get("is_pattern_source", False))
+                    if is_pattern_source:
+                        item_data["price"] = 0
+
                     if repair_item_id and repair_item_id in existing_items:
                         db_item = existing_items[repair_item_id]
                         for field, value in item_data.items():
@@ -303,10 +315,11 @@ class RepairService:
                                 await self.db.delete(rt_row)
                             await self.db.flush()
                             for i, rt in enumerate(repair_types_data):
+                                rt_price = 0 if is_pattern_source else rt["price"]
                                 self.db.add(RepairItemRepairType(
                                     repair_item_id=db_item.id,
                                     repair_type_id=rt["repair_type_id"],
-                                    price=rt["price"],
+                                    price=rt_price,
                                     sort_order=i,
                                     updated_by=update_dict.get("updated_by")
                                 ))
@@ -318,10 +331,11 @@ class RepairService:
                     self.db.add(new_item)
                     await self.db.flush()
                     for i, rt in enumerate(repair_types_data):
+                        rt_price = 0 if is_pattern_source else rt["price"]
                         self.db.add(RepairItemRepairType(
                             repair_item_id=new_item.id,
                             repair_type_id=rt["repair_type_id"],
-                            price=rt["price"],
+                            price=rt_price,
                             sort_order=i,
                             created_by=update_dict.get("updated_by")
                         ))
