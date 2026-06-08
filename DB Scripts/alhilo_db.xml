@@ -1700,4 +1700,155 @@
             <dropColumn tableName="repair_items" columnName="is_pattern_source"/>
         </rollback>
     </changeSet>
+
+    <!-- ========================================== -->
+    <!-- CHANGESET 30: attendance sessions          -->
+    <!-- ========================================== -->
+    <changeSet id="C030" author="CIOC">
+        <comment>Create attendances table for user clock-in and clock-out tracking</comment>
+
+        <createTable tableName="attendances">
+            <column name="attendance_id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="clock_in" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="clock_out" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="ip_address" type="VARCHAR(64)"/>
+            <column name="device_info" type="VARCHAR(1024)"/>
+            <column name="is_active" type="BOOLEAN" defaultValue="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="UUID"/>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_by" type="UUID"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="attendances"
+            baseColumnNames="user_id"
+            referencedTableName="users"
+            referencedColumnNames="user_id"
+            constraintName="fk_attendances_user_id"
+            onDelete="RESTRICT"
+            onUpdate="NO ACTION"/>
+
+        <createIndex indexName="idx_attendances_user_id" tableName="attendances">
+            <column name="user_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_attendances_clock_in" tableName="attendances">
+            <column name="clock_in"/>
+        </createIndex>
+
+        <createIndex indexName="idx_attendances_clock_out" tableName="attendances">
+            <column name="clock_out"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex indexName="idx_attendances_clock_out" tableName="attendances"/>
+            <dropIndex indexName="idx_attendances_clock_in" tableName="attendances"/>
+            <dropIndex indexName="idx_attendances_user_id" tableName="attendances"/>
+            <dropForeignKeyConstraint
+                baseTableName="attendances"
+                constraintName="fk_attendances_user_id"/>
+            <dropTable tableName="attendances"/>
+        </rollback>
+    </changeSet>
+
+    <!-- ========================================== -->
+    <!-- CHANGESET 31: User fingerprint samples     -->
+    <!-- ========================================== -->
+    <changeSet id="C031" author="CIOC">
+        <comment>Create user fingerprint samples table</comment>
+
+        <createTable tableName="user_fingerprint_samples">
+            <column name="user_fingerprint_sample_id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sample_index" type="SMALLINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sample_data" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="user_fingerprint_samples"
+            baseColumnNames="user_id"
+            referencedTableName="users"
+            referencedColumnNames="user_id"
+            constraintName="fk_user_fingerprint_samples_user"
+            onDelete="RESTRICT"
+            onUpdate="NO ACTION"/>
+
+        <createIndex tableName="user_fingerprint_samples" indexName="idx_user_fingerprint_samples_user_id">
+            <column name="user_id"/>
+        </createIndex>
+
+        <addUniqueConstraint
+            tableName="user_fingerprint_samples"
+            columnNames="user_id,sample_index"
+            constraintName="uk_user_fingerprint_samples_user_index"/>
+    </changeSet>
+
+    <!-- ========================================== -->
+    <!-- CHANGESET 32: User fingerprint templates   -->
+    <!-- ========================================== -->
+    <changeSet id="C032" author="CIOC">
+        <comment>Create user fingerprint templates table</comment>
+
+        <createTable tableName="user_fingerprint_templates">
+            <column name="user_fingerprint_template_id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="template_index" type="SMALLINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="template_data" type="BYTEA">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="user_fingerprint_templates"
+            baseColumnNames="user_id"
+            referencedTableName="users"
+            referencedColumnNames="user_id"
+            constraintName="fk_user_fingerprint_templates_user"
+            onDelete="RESTRICT"
+            onUpdate="NO ACTION"/>
+
+        <createIndex tableName="user_fingerprint_templates" indexName="idx_user_fingerprint_templates_user_id">
+            <column name="user_id"/>
+        </createIndex>
+
+        <addUniqueConstraint 
+            tableName="user_fingerprint_templates"
+            columnNames="user_id, template_index"
+            constraintName="uk_user_fingerprint_templates_user_index"/>
+    </changeSet>
+
 </databaseChangeLog>

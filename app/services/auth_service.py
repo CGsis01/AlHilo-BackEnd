@@ -56,6 +56,44 @@ class AuthService:
             response.code = "AUTH_ERROR"
         
         return response        
+
+    async def authenticate_fingerprint(self, user_id: UUID) -> ApiResponse[AuthResponse]:
+        response = ApiResponse[AuthResponse](
+            status=200,
+            message="User authenticated successfully",
+            code="SUCCESS",
+            data=None)
+
+        try:
+            user = await self.user_repository.get_by_id(user_id)
+            if not user:
+                response.status = status.HTTP_404_NOT_FOUND
+                response.message = "User not found"
+                response.code = "AUTH_ERROR"
+
+                return response
+
+            if not bool(user.is_active):
+                response.status = status.HTTP_403_FORBIDDEN
+                response.message = "User is inactive"
+                response.code = "AUTH_ERROR"
+                
+                return response
+            
+            access_token = create_access_token({"sub": str(user.id), "email": user.email, "store_id": str(user.store_id)})
+            refresh_token = create_refresh_token({"sub": str(user.id)})
+            
+            response.data = AuthResponse(
+                user=UserResponse.model_validate(user),
+                token=TokenResponse(access_token=access_token, refresh_token=refresh_token)) 
+            
+            return response
+        except Exception as e:
+            response.status = status.HTTP_500_INTERNAL_SERVER_ERROR
+            response.message = str(e)
+            response.code = "AUTH_ERROR"
+
+        return response
     
     async def refresh_token(self, refresh_token: str) -> ApiResponse[TokenResponse]:
         response = ApiResponse[TokenResponse](

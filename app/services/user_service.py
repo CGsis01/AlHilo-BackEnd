@@ -5,12 +5,23 @@ from app.repositories.user_repository import UserRepository
 from app.schemas.api_response import ApiResponse
 from app.schemas.user import UserCreate, UserUpdate, UserActivate, UserDeactivate, UserResponse, UserFilters
 from app.core.security import get_password_hash
+from app.clients.biometric_client import BiometricClient
 from fastapi import HTTPException, status
 
 class UserService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.user_repository = UserRepository(db)
+    
+    def _normalize_fingerprints(
+        self,
+        fingerprint_samples: Optional[List[str]] = None) -> Optional[List[str]]:
+        if fingerprint_samples is not None:
+            samples = [str(s).strip() for s in fingerprint_samples if str(s).strip()]
+            
+            return samples
+
+        return None
 
     async def get_user(self, user_id: UUID, store_id: Optional[UUID] = None) -> ApiResponse[UserResponse]:
         response = ApiResponse[UserResponse](
@@ -25,7 +36,7 @@ class UserService:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="User not found")
-            
+
             response.data = UserResponse.model_validate(user)
 
             return response
@@ -93,10 +104,34 @@ class UserService:
                     detail="Email already registered")
             
             user_dict = user_data.model_dump()
+
             user_dict["password_hash"] = get_password_hash(user_dict.pop("password"))
             
+            fingerprint_samples = user_dict.pop("fingerprint_samples", None)
+
+            normalized_samples = self._normalize_fingerprints(fingerprint_samples)
+
+            if normalized_samples is not None:
+                if len(normalized_samples) != 4:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Se requieren exactamente 4 huellas para enrolar el usuario")
+
             user = await self.user_repository.create(user_dict)
 
+            if normalized_samples:
+                biometric_client = BiometricClient()
+
+                try:
+                    enroll_result = await biometric_client.enroll(UUID(str(user.id)), normalized_samples)
+
+                    if enroll_result.get("success") and enroll_result.get("templatesGenerated", 0) > 0:
+                        user._has_fingerprint_enrolled = True
+                except Exception as ex:
+                    raise HTTPException(
+                        status_code=500,
+                        detail=f"Error generando biometría: {str(ex)}")
+            
             response.data = UserResponse.model_validate(user)
             
             return response
@@ -124,12 +159,35 @@ class UserService:
             update_dict = user_data.model_dump(exclude_unset=True)
             if "password" in update_dict:
                 update_dict["password_hash"] = get_password_hash(update_dict.pop("password"))
-            
+
+            fingerprint_samples = update_dict.pop("fingerprint_samples", None)
+
+            normalized_samples = self._normalize_fingerprints(fingerprint_samples)
+
+            if normalized_samples is not None:
+                if len(normalized_samples) != 4:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Se requieren exactamente 4 huellas para actualizar el enrolamiento")
+
             for field, value in update_dict.items():
                 setattr(user, field, value)
             
             await self.db.commit()
             await self.db.refresh(user)
+
+            if normalized_samples:
+                biometric_client = BiometricClient()
+
+                try:
+                    enroll_result = await biometric_client.enroll(UUID(str(user.id)), normalized_samples)
+
+                    if enroll_result.get("success") and enroll_result.get("templatesGenerated", 0) > 0:
+                        user._has_fingerprint_enrolled = True
+                except Exception as ex:
+                    raise HTTPException(
+                        status_code=500,
+                        detail=f"Error generando biometría: {str(ex)}")
 
             response.data = UserResponse.model_validate(user)
 

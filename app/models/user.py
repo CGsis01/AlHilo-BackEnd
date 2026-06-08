@@ -22,5 +22,11 @@ class User(BaseModel):
     store = relationship(Store, backref="users", lazy="joined")
     assigned_repair_items = relationship("RepairItem", foreign_keys="RepairItem.assigned_to_id", back_populates="assigned_to")
     attended_repair_items = relationship("RepairItem", foreign_keys="RepairItem.attended_by_id", back_populates="attended_by")
+    attendance_records = relationship("Attendance", back_populates="user")
     created_repairs = relationship(Repair, foreign_keys=[Repair.created_by], back_populates="created_by_user")
     created_payments = relationship("Payment", foreign_keys=[Payment.created_by], back_populates="created_by_user")
+    templates = relationship("UserFingerprintTemplate", backref="user", lazy="selectin")
+
+    @property
+    def has_fingerprint_enrolled(self) -> bool:
+        return len(self.templates) > 0

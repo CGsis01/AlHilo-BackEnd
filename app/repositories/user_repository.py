@@ -2,6 +2,7 @@ from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_, and_
 from uuid import UUID
+from sqlalchemy.orm import selectinload
 from app.models.user import User
 from app.models.role import Role
 from app.models.store import Store
@@ -19,6 +20,12 @@ class UserRepository(BaseRepository[User]):
         result = await self.db.execute(query)
         
         return result.scalar_one_or_none()
+
+    async def get_active_users(self) -> List[User]:
+        query = select(User).filter(User.is_active == True)
+        result = await self.db.execute(query)
+
+        return list(result.scalars().all())
 
     async def deactivate_user(self, user_id: UUID, store_id: UUID, user_updated_id: UUID) -> Optional[User]:
         result = await self.db.execute(
@@ -58,7 +65,7 @@ class UserRepository(BaseRepository[User]):
     
     async def get_all_filtered(self, filters: Optional[UserFilters] = None) -> List[User]:
         """Get all users with optional filters"""
-        query = select(User).join(Role, User.role_id == Role.id).join(Store, User.store_id == Store.id)
+        query = select(User).join(Role, User.role_id == Role.id).join(Store, User.store_id == Store.id).options(selectinload(User.templates))
         
         if filters:
             if filters.role_id is not None:
