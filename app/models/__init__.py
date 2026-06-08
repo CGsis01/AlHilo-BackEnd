@@ -11,6 +11,8 @@ from app.models.user import User
 from app.models.garment import Garment
 from app.models.garment_repair_type import GarmentRepairType
 from app.models.repair_comment import RepairComment
+from app.models.attendance import Attendance
+from app.models.fingerprint_template import UserFingerprintTemplate
 
 __all__ = [
     "Client",
@@ -26,4 +28,6 @@ __all__ = [
     "Garment",
     "GarmentRepairType",
     "RepairComment",
+    "Attendance",
+    "UserFingerprintTemplate"
 ]

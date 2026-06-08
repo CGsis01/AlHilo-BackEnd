@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
@@ -19,14 +19,20 @@ class UserBase(BaseModel):
     email: EmailStr
 
 class UserCreate(UserBase):
+    model_config = ConfigDict(populate_by_name=True)
+
     password: str
+    fingerprint_samples: Optional[List[str]] = None
     role_id: UUID
     store_id: UUID
 
 class UserUpdate(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     name: Optional[str] = None
     email: Optional[EmailStr] = None
     password: Optional[str] = None
+    fingerprint_samples: Optional[List[str]] = None
     role_id: Optional[UUID] = None
     store_id: Optional[UUID] = None
     is_active: Optional[bool] = None
@@ -36,6 +42,7 @@ class UserResponse(UserBase):
     role: RoleResponse
     store: Optional[StoreResponse] = None
     is_active: bool
+    has_fingerprint_enrolled: bool = False
     created_at: datetime
     updated_at: datetime
     
@@ -55,6 +62,9 @@ class UserActivate(BaseModel):
 class UserLogin(BaseModel):
     email: str
     password: str
+
+class FingerprintLoginRequest(BaseModel):
+    fingerprint_data: str
 
 class TokenResponse(BaseModel):
     access_token: str

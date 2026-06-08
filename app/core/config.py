@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     TWILIO_ACCOUNT_SID: str = ""
     TWILIO_AUTH_TOKEN: str = ""
     TWILIO_WHATSAPP_FROM: str = "whatsapp:+14155238886"  # Twilio sandbox default
+
+    # Biometric Service
+    BIOMETRIC_SERVICE_URL: str = "http://localhost:5004"
     
     class Config:
         env_file = ".env"
