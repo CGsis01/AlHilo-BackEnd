@@ -63,8 +63,8 @@ class UserLogin(BaseModel):
     email: str
     password: str
 
-class FingerprintLoginRequest(BaseModel):
-    fingerprint_data: str
+class BiometricLoginRequest(BaseModel):
+    user_id: UUID
 
 class TokenResponse(BaseModel):
     access_token: str
