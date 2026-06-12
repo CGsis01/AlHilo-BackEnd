@@ -23,7 +23,7 @@ class CashCutMovement(BaseModel):
     created_at: datetime
 
 class CardDetail(BaseModel):
-    voucher_id: str
+    voucher_id: str | None
     is_debit: bool
     amount: float
 

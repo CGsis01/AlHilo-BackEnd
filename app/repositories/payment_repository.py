@@ -146,8 +146,8 @@ class PaymentRepository(BaseRepository[Payment]):
             time.max)
         
         query = (
-            select(Payment.voucher_id.label("voucherId"), 
-                   Payment.is_debit.label("isDebit"),
+            select(Payment.voucher_id.label("voucher_id"), 
+                   Payment.is_debit.label("is_debit"),
                    Payment.amount.label("amount"))
             .join(PaymentType, Payment.payment_type_id == PaymentType.id)
             .where(
