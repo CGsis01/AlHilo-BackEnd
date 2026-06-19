@@ -1,3 +1,4 @@
+from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 from typing import AsyncGenerator, Any
@@ -10,10 +11,18 @@ engine_options: dict[str, Any] = {
 
 # Force UTC at the DB session level for asyncpg/PostgreSQL connections.
 if settings.DATABASE_URL.startswith("postgresql+asyncpg"):
-    engine_options["connect_args"] = {"server_settings": {"timezone": "UTC"}}
+    engine_options["connect_args"] = {
+        "statement_cache_size": 0,
+        "server_settings": {"timezone": "UTC"}
+        }
 
 # Create async engine
-engine = create_async_engine(settings.DATABASE_URL, **engine_options)
+engine = create_async_engine(
+    settings.DATABASE_URL, 
+    pool_pre_ping=True,
+    pool_recycle=1800,
+    poolclass=NullPool,
+    **engine_options)
 
 # Create async session factory
 AsyncSessionLocal = async_sessionmaker(
