@@ -1,4 +1,3 @@
-from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 from typing import AsyncGenerator, Any
@@ -19,9 +18,10 @@ if settings.DATABASE_URL.startswith("postgresql+asyncpg"):
 # Create async engine
 engine = create_async_engine(
     settings.DATABASE_URL, 
+    pool_size=5,
+    max_overflow=2,
     pool_pre_ping=True,
     pool_recycle=1800,
-    poolclass=NullPool,
     connect_args={
         "statement_cache_size": 0,
         "prepared_statement_cache_size": 0,  # prueba esto
@@ -45,7 +45,9 @@ Base = declarative_base()
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
+        print(f"Session creada: {id(session)}")
         try:
             yield session
         finally:
+            print(f"Session cerrada: {id(session)}")
             await session.close()
