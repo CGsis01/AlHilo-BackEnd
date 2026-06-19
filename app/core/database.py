@@ -22,7 +22,16 @@ engine = create_async_engine(
     pool_pre_ping=True,
     pool_recycle=1800,
     poolclass=NullPool,
-    **engine_options)
+    connect_args={
+        "statement_cache_size": 0,
+        "prepared_statement_cache_size": 0,  # prueba esto
+        "server_settings": {
+            "timezone": "UTC"
+        }
+    },
+    echo=settings.DEBUG,
+    future=True)
+    # **engine_options)
 
 # Create async session factory
 AsyncSessionLocal = async_sessionmaker(
