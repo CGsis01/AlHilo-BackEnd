@@ -12,6 +12,7 @@ engine_options: dict[str, Any] = {
 if settings.DATABASE_URL.startswith("postgresql+asyncpg"):
     engine_options["connect_args"] = {
         "statement_cache_size": 0,
+        "prepared_statement_cache_size": 0,  
         "server_settings": {"timezone": "UTC"}
         }
 
@@ -22,16 +23,7 @@ engine = create_async_engine(
     max_overflow=2,
     pool_pre_ping=True,
     pool_recycle=1800,
-    connect_args={
-        "statement_cache_size": 0,
-        "prepared_statement_cache_size": 0,  # prueba esto
-        "server_settings": {
-            "timezone": "UTC"
-        }
-    },
-    echo=settings.DEBUG,
-    future=True)
-    # **engine_options)
+    **engine_options)
 
 # Create async session factory
 AsyncSessionLocal = async_sessionmaker(

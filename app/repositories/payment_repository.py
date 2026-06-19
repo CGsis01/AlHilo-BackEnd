@@ -63,8 +63,10 @@ class PaymentRepository(BaseRepository[Payment]):
         return result.unique().scalar_one()
 
     async def get_cash_cut(self, cash_cut_date: date) -> List[PaymentSummary]:
-        start_date = datetime.combine(cash_cut_date, time.min)
-        end_date = datetime.combine(cash_cut_date, time.max)
+        mx_tz = ZoneInfo("America/Mexico_City")
+
+        start_date = datetime.combine(cash_cut_date, time.min).replace(tzinfo=mx_tz)
+        end_date = datetime.combine(cash_cut_date, time.max).replace(tzinfo=mx_tz)
 
         query = (
             select(PaymentType.name,
@@ -81,8 +83,10 @@ class PaymentRepository(BaseRepository[Payment]):
         return [PaymentSummary(**row._mapping) for row in result.all()]
 
     async def get_cash_cut_by_advance_type(self, cash_cut_date: date) -> List[AdvanceSummary]:
-        start_date = datetime.combine(cash_cut_date, time.min)
-        end_date = datetime.combine(cash_cut_date, time.max)
+        mx_tz = ZoneInfo("America/Mexico_City")
+
+        start_date = datetime.combine(cash_cut_date, time.min).replace(tzinfo=mx_tz)
+        end_date = datetime.combine(cash_cut_date, time.max).replace(tzinfo=mx_tz)
 
         query = (
             select(Payment.is_advance,
@@ -98,8 +102,10 @@ class PaymentRepository(BaseRepository[Payment]):
         return [AdvanceSummary(**row._mapping) for row in result.all()]
 
     async def get_cash_cut_movements(self, cash_cut_date: date) -> List[CashCutMovement]:
-        start_date = datetime.combine(cash_cut_date, time.min)
-        end_date = datetime.combine(cash_cut_date, time.max)
+        mx_tz = ZoneInfo("America/Mexico_City")
+
+        start_date = datetime.combine(cash_cut_date, time.min).replace(tzinfo=mx_tz)
+        end_date = datetime.combine(cash_cut_date, time.max).replace(tzinfo=mx_tz)
 
         query = (
             select(Payment.id.label("payment_id"),
@@ -122,8 +128,10 @@ class PaymentRepository(BaseRepository[Payment]):
         return [CashCutMovement(**row._mapping) for row in result.all()]
     
     async def get_card_details(self, cash_cut_date: date) -> List[CardDetail]:
-        start_date = datetime.combine(cash_cut_date, time.min)
-        end_date = datetime.combine(cash_cut_date, time.max)
+        mx_tz = ZoneInfo("America/Mexico_City")
+
+        start_date = datetime.combine(cash_cut_date, time.min).replace(tzinfo=mx_tz)
+        end_date = datetime.combine(cash_cut_date, time.max).replace(tzinfo=mx_tz)
         
         query = (
             select(Payment.voucher_id.label("voucher_id"), 
