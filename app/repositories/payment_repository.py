@@ -1,6 +1,6 @@
 from typing import List, Optional
 from datetime import date, datetime, time
-from uuid import UUID
+from zoneinfo import ZoneInfo
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, select
 from sqlalchemy.orm import joinedload, selectinload
@@ -63,13 +63,8 @@ class PaymentRepository(BaseRepository[Payment]):
         return result.unique().scalar_one()
 
     async def get_cash_cut(self, cash_cut_date: date) -> List[PaymentSummary]:
-        start_date = datetime.combine(
-            cash_cut_date,
-            time.min)
-
-        end_date = datetime.combine(
-            cash_cut_date,
-            time.max)
+        start_date = datetime.combine(cash_cut_date, time.min)
+        end_date = datetime.combine(cash_cut_date, time.max)
 
         query = (
             select(PaymentType.name,
@@ -77,8 +72,8 @@ class PaymentRepository(BaseRepository[Payment]):
                 func.coalesce(func.sum(Payment.amount), 0).label("amount"))
             .join(PaymentType, Payment.payment_type_id == PaymentType.id)
             .where(
-                Payment.created_at >= start_date,
-                Payment.created_at <= end_date)
+                Payment.created_at >= start_date.astimezone(ZoneInfo("UTC")),
+                Payment.created_at <= end_date.astimezone(ZoneInfo("UTC")))
             .group_by(PaymentType.name))
 
         result = await self.db.execute(query)
@@ -86,21 +81,16 @@ class PaymentRepository(BaseRepository[Payment]):
         return [PaymentSummary(**row._mapping) for row in result.all()]
 
     async def get_cash_cut_by_advance_type(self, cash_cut_date: date) -> List[AdvanceSummary]:
-        start_date = datetime.combine(
-            cash_cut_date,
-            time.min)
-
-        end_date = datetime.combine(
-            cash_cut_date,
-            time.max)
+        start_date = datetime.combine(cash_cut_date, time.min)
+        end_date = datetime.combine(cash_cut_date, time.max)
 
         query = (
             select(Payment.is_advance,
                 func.count(Payment.id).label("transactions"),
                 func.coalesce(func.sum(Payment.amount), 0).label("amount"))
             .where(
-                Payment.created_at >= start_date,
-                Payment.created_at <= end_date)
+                Payment.created_at >= start_date.astimezone(ZoneInfo("UTC")),
+                Payment.created_at <= end_date.astimezone(ZoneInfo("UTC")))
             .group_by(Payment.is_advance))
 
         result = await self.db.execute(query)
@@ -108,13 +98,8 @@ class PaymentRepository(BaseRepository[Payment]):
         return [AdvanceSummary(**row._mapping) for row in result.all()]
 
     async def get_cash_cut_movements(self, cash_cut_date: date) -> List[CashCutMovement]:
-        start_date = datetime.combine(
-            cash_cut_date,
-            time.min)
-
-        end_date = datetime.combine(
-            cash_cut_date,
-            time.max)
+        start_date = datetime.combine(cash_cut_date, time.min)
+        end_date = datetime.combine(cash_cut_date, time.max)
 
         query = (
             select(Payment.id.label("payment_id"),
@@ -128,8 +113,8 @@ class PaymentRepository(BaseRepository[Payment]):
             .join(Repair, Payment.repair_id == Repair.id)
             .join(PaymentType, Payment.payment_type_id == PaymentType.id)
             .where(
-                Payment.created_at >= start_date,
-                Payment.created_at <= end_date)
+                Payment.created_at >= start_date.astimezone(ZoneInfo("UTC")),
+                Payment.created_at <= end_date.astimezone(ZoneInfo("UTC")))
             .order_by(Payment.created_at))
 
         result = await self.db.execute(query)
@@ -137,13 +122,8 @@ class PaymentRepository(BaseRepository[Payment]):
         return [CashCutMovement(**row._mapping) for row in result.all()]
     
     async def get_card_details(self, cash_cut_date: date) -> List[CardDetail]:
-        start_date = datetime.combine(
-            cash_cut_date,
-            time.min)
-
-        end_date = datetime.combine(
-            cash_cut_date,
-            time.max)
+        start_date = datetime.combine(cash_cut_date, time.min)
+        end_date = datetime.combine(cash_cut_date, time.max)
         
         query = (
             select(Payment.voucher_id.label("voucher_id"), 
@@ -152,8 +132,8 @@ class PaymentRepository(BaseRepository[Payment]):
             .join(PaymentType, Payment.payment_type_id == PaymentType.id)
             .where(
                 PaymentType.code == "Card",
-                Payment.created_at >= start_date,
-                Payment.created_at <= end_date)
+                Payment.created_at >= start_date.astimezone(ZoneInfo("UTC")),
+                Payment.created_at <= end_date.astimezone(ZoneInfo("UTC")))
             .order_by(Payment.created_at))
 
         result = await self.db.execute(query)
