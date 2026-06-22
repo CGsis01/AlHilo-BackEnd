@@ -31,6 +31,7 @@ class CashCutResponse(BaseModel):
     cash_cut_date: datetime
     cash: PaymentSummary
     card: PaymentSummary
+    transfer: PaymentSummary
     advances: PaymentSummary
     settlements: PaymentSummary
     total_transactions: int

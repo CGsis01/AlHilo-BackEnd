@@ -83,6 +83,11 @@ class PaymentService:
                 name = "Tarjeta",
                 transactions = 0,
                 amount = 0)
+            
+            transfer = PaymentSummary(
+                name = "Transferencia",
+                transactions = 0,
+                amount = 0)
 
             advances = PaymentSummary(
                 name = "Anticipos",
@@ -105,6 +110,10 @@ class PaymentService:
                 if payment.name.upper() == "TARJETA":
                     card.transactions = payment.transactions
                     card.amount = payment.amount
+                
+                if payment.name.upper() == "TRANSFERENCIA":
+                    transfer.transactions = payment.transactions
+                    transfer.amount = payment.amount
 
                 grand_total += payment.amount
                 total_transactions += payment.transactions
@@ -121,6 +130,7 @@ class PaymentService:
                 cash_cut_date = cut_date,
                 cash = cash,
                 card = card,
+                transfer = transfer,
                 advances = advances,
                 settlements = settlements,
                 total_transactions = total_transactions,

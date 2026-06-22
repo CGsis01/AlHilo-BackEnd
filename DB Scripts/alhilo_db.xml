@@ -1851,4 +1851,15 @@
             constraintName="uk_user_fingerprint_templates_user_index"/>
     </changeSet>
 
+    <!-- =========================================== -->
+    <!-- CHANGESET 33: Add transacation payment type -->
+    <!-- =========================================== -->
+    <changeSet id="C033" author="CIOC">
+        <insert tableName="payment_types">
+            <column name="payment_type_id" valueComputed="uuid_generate_v4()"/>
+            <column name="name" value="Transferencia"/>
+            <column name="code" value="Transfer"/>
+        </insert>
+    </changeSet>
+
 </databaseChangeLog>
