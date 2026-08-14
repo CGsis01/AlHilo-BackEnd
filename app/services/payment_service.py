@@ -1,16 +1,23 @@
 from datetime import datetime
 from typing import List, Optional
+from uuid import UUID
+from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.api_response import ApiResponse
 from app.schemas.payment import PaymentCreate, PaymentResponse
 from app.repositories.payment_repository import PaymentRepository
+from app.repositories.repair_repository import RepairRepository
+from app.services.whatsapp_service import WhatsappService
 from app.schemas.cash_cut import (CardDetail, CashCutMovement, CashCutResponse, PaymentSummary)
+from vercel_blob import put
 
 class PaymentService:
     """Service layer for Payment operations"""
     def __init__(self, db: AsyncSession):
         self.db = db
         self.payment_repository = PaymentRepository(db)
+        self.repair_repository = RepairRepository(db)
+        self.whatsapp_service = WhatsappService()
 
     async def create_payment(self, payment_data: PaymentCreate) -> ApiResponse[PaymentResponse]:
         response = ApiResponse[PaymentResponse](
@@ -143,4 +150,49 @@ class PaymentService:
             response.message = str(e)
             response.code = "CASH_CUT_CREATION_ERROR"
 
+        return response
+    
+    async def upload_advance_payment_file(self, repair_id: UUID, file: UploadFile) -> ApiResponse[str]:
+        response = ApiResponse[str](
+            status=200,
+            message="File uploaded successfully",
+            code="SUCCESS",
+            data=None)
+        
+        pdf_bytes = await file.read()
+        
+        filename = f"AlHilo/{repair_id}/anticipo.pdf"        
+
+        result = put(
+            filename,
+            pdf_bytes,
+            {
+                "access": "public",
+                "contentType": "application/pdf"
+            })
+
+        response.data = result["url"]
+        
+        return response
+    
+    async def upload_settlement_payment_file(self, repair_id: UUID, file: UploadFile) -> ApiResponse[str]:
+        response = ApiResponse[str](
+            status=200,
+            message="File uploaded successfully",
+            code="SUCCESS",
+            data=None)
+        
+        pdf_bytes = await file.read()
+        filename = f"AlHilo/{repair_id}/liquidacion.pdf"
+                
+        result = put(
+            filename,
+            pdf_bytes,
+            {
+                "access": "public",
+                "contentType": "application/pdf"
+            })
+
+        response.data = result["url"]
+        
         return response
