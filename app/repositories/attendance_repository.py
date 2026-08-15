@@ -1,4 +1,4 @@
-from datetime import date, datetime, time, datetime
+from datetime import date, datetime, time, timezone
 from typing import List, Optional
 from uuid import UUID
 from sqlalchemy import select
@@ -34,8 +34,8 @@ class AttendanceRepository(BaseRepository[Attendance]):
         
         # Filtro día específico
         if attendance_date:
-            day_start = datetime.combine(attendance_date, time.min)
-            day_end = datetime.combine(attendance_date, time.max)
+            day_start = datetime.combine(attendance_date, time.min, tzinfo=timezone.utc)
+            day_end = datetime.combine(attendance_date, time.max, tzinfo=timezone.utc)
 
             query = query.where(
                 Attendance.clock_in >= day_start,
@@ -43,10 +43,10 @@ class AttendanceRepository(BaseRepository[Attendance]):
 
         # Filtro rango
         if start_date:
-            query = query.where(Attendance.clock_in >= datetime.combine(start_date, time.min))
+            query = query.where(Attendance.clock_in >= datetime.combine(start_date, time.min, tzinfo=timezone.utc))
 
         if end_date:
-            query = query.where(Attendance.clock_in <= datetime.combine(end_date, time.max))
+            query = query.where(Attendance.clock_in <= datetime.combine(end_date, time.max, tzinfo=timezone.utc))
 
         query = query.order_by(User.name.asc(), Attendance.clock_in.asc()).offset(skip).limit(limit)
 
