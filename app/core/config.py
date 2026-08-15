@@ -25,9 +25,6 @@ class Settings(BaseSettings):
     TWILIO_AUTH_TOKEN: str = ""
     TWILIO_WHATSAPP_FROM: str = "whatsapp:+14155238886"  # Twilio sandbox default
 
-    # Vercel BLOB
-    BLOB_READ_WRITE_TOKEN: str 
-
     # Biometric Service
     BIOMETRIC_SERVICE_URL: str = "http://localhost:5004"
     
