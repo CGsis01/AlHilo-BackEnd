@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, File, UploadFile
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 from uuid import UUID
@@ -35,23 +35,3 @@ async def get_payments(
         filters['client_id'] = client_id
     
     return await payment_service.get_payments(filters)
-
-@router.post("/{repair_id}/AdvancePaymentReceipt", response_model=ApiResponse[str])
-async def upload_advance_payment_pdf(
-    repair_id: UUID,
-    file: UploadFile = File(...),
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)):
-    payment_service = PaymentService(db)
-        
-    return await payment_service.upload_advance_payment_file(repair_id, file)
-
-@router.post("/{repair_id}/SettlementPaymentReceipt", response_model=ApiResponse[str])
-async def upload_settlement_payment_pdf(
-    repair_id: UUID,
-    file: UploadFile = File(...),
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)):
-    payment_service = PaymentService(db)
-    
-    return await payment_service.upload_settlement_payment_file(repair_id, file)
