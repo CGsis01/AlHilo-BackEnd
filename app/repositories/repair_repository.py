@@ -9,6 +9,7 @@ from app.models.repair_item_repair_type import RepairItemRepairType
 from app.models.repair_type import RepairType
 from app.models.repair_status import RepairStatus
 from app.repositories.base import BaseRepository
+from app.models.client import Client
 
 class RepairRepository(BaseRepository[Repair]):
     def __init__(self, db: AsyncSession):
@@ -17,6 +18,7 @@ class RepairRepository(BaseRepository[Repair]):
     def _query_with_relations(self):
         return (
             select(Repair).options(
+                joinedload(Repair.client).joinedload(Client.store),
                 joinedload(Repair.repair_status),
                 joinedload(Repair.created_by_user),
                 selectinload(Repair.repair_items).options(
