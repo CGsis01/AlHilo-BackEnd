@@ -12,6 +12,7 @@ from app.models.repair_type import RepairType
 from app.models.repair_item import RepairItem
 from app.repositories.base import BaseRepository
 from app.schemas.cash_cut import AdvanceSummary, CardDetail, CashCutMovement, PaymentSummary
+from app.models.client import Client
 
 class PaymentRepository(BaseRepository[Payment]):
     def __init__(self, db: AsyncSession):
@@ -20,6 +21,7 @@ class PaymentRepository(BaseRepository[Payment]):
     def _query_with_relations(self):
         return (
             select(Payment).options(
+                joinedload(Payment.repair).joinedload(Repair.client).joinedload(Client.store),
                 joinedload(Payment.repair).joinedload(Repair.repair_status),
                 joinedload(Payment.repair).joinedload(Repair.created_by_user),
                 joinedload(Payment.repair).selectinload(
