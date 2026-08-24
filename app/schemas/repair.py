@@ -3,6 +3,7 @@ from typing import Optional
 from datetime import datetime, timezone
 from uuid import UUID
 from decimal import Decimal
+from app.schemas.client import ClientResponse
 
 from app.schemas.repair_item import RepairItemCreate, RepairItemResponse
 from app.schemas.repair_status import RepairStatusResponse
@@ -100,6 +101,7 @@ class RepairResponse(RepairBase):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+    client: ClientResponse
     
     class Config:
         from_attributes = True
