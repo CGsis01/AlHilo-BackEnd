@@ -10,7 +10,7 @@ from app.repositories.repair_repository import RepairRepository
 from app.repositories.repair_item_repository import RepairItemRepository
 from app.schemas.api_response import ApiResponse
 from app.schemas.repair import AssignRepairGarments, AssignRepairItem, RepairCreate, RepairUpdate, RepairResponse, UpdateRepairItemStatus, UpdateStatus
-from app.schemas.repair_item import RepairItemResponse
+from app.schemas.repair_item import RepairItemResponse, RepairItemUpdate
 from app.services.repair_realtime_service import repair_realtime_broker
 from fastapi import HTTPException, status
 
@@ -353,6 +353,91 @@ class RepairService:
             response.code = "REPAIR_UPDATE_ERROR"
         
         return response
+
+    async def update_repair_item(
+        self,
+        repair_id: UUID,
+        repair_item_id: UUID,
+        repair_item_data: RepairItemUpdate
+    ) -> ApiResponse[RepairItemResponse]:
+
+        response = ApiResponse[RepairItemResponse](
+            status=200,
+            message="Repair item updated successfully",
+            code="SUCCESS",
+            data=None
+        )
+
+        try:
+            repair = await self.repair_repository.get_by_id_with_relations(repair_id)
+
+            if not repair:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Repair not found"
+                )
+
+            item = await self.repair_item_repository.get_by_id_with_relations(
+                repair_item_id
+            )
+
+            if item is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Repair item not found"
+                )
+
+            if cast(UUID, item.repair_id) != repair_id:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Repair item not found"
+                )
+
+            update_dict = repair_item_data.model_dump(exclude_unset=True)
+            repair_types_data = update_dict.pop("repair_types", None)
+            update_dict.pop("id", None)
+
+            for field, value in update_dict.items():
+                if value is not None:
+                    setattr(item, field, value)
+
+            if repair_types_data is not None:
+                for relation in list(item.repair_item_repair_types):
+                    await self.db.delete(relation)
+
+                await self.db.flush()
+
+                for index, repair_type in enumerate(repair_types_data):
+                    self.db.add(
+                        RepairItemRepairType(
+                            repair_item_id=item.id,
+                            repair_type_id=repair_type["repair_type_id"],
+                            price=repair_type["price"],
+                            sort_order=index,
+                            updated_by=repair_item_data.updated_by
+                        )
+                    )
+
+            await self.db.commit()
+
+            item = await self.repair_item_repository.get_by_id_with_relations(
+                repair_item_id
+            )
+
+            response.data = RepairItemResponse.model_validate(item)
+
+        except HTTPException:
+            await self.db.rollback()
+            raise
+
+        except Exception as e:
+            await self.db.rollback()
+            response.status = 500
+            response.message = str(e)
+            response.code = "REPAIR_ITEM_UPDATE_ERROR"
+
+        return response
+
 
     async def assign_repair_items(self, repair_id: UUID, assign_garments_data: AssignRepairGarments) -> ApiResponse[RepairResponse]:
         response = ApiResponse[RepairResponse](
