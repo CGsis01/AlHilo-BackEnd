@@ -6,7 +6,7 @@ from uuid import UUID
 from app.core.database import AsyncSessionLocal, get_db
 from app.schemas.api_response import ApiResponse
 from app.schemas.repair import AssignRepairGarments, AssignRepairItem, RepairCreate, RepairUpdate, RepairResponse, UpdateRepairItemStatus, UpdateStatus
-from app.schemas.repair_item import RepairItemResponse
+from app.schemas.repair_item import RepairItemResponse, RepairItemUpdate
 from app.services.repair_service import RepairService
 from app.services.auth_service import AuthService
 from app.services.repair_realtime_service import repair_realtime_broker
@@ -63,6 +63,25 @@ async def update_repair(
     repair_service = RepairService(db)
     
     return await repair_service.update_repair(repair_id, repair_data)
+
+@router.put(
+    "/{repair_id}/items/{repair_item_id}",
+    response_model=ApiResponse[RepairItemResponse]
+)
+async def update_repair_item(
+    repair_id: UUID,
+    repair_item_id: UUID,
+    repair_item_data: RepairItemUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    repair_service = RepairService(db)
+
+    return await repair_service.update_repair_item(
+        repair_id,
+        repair_item_id,
+        repair_item_data
+    )
 
 @router.post("/{repair_id}/assign-garments", response_model=ApiResponse[RepairResponse])
 async def assign_repair_garments(
