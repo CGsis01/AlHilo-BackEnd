@@ -20,6 +20,19 @@ async def create_payment(
     
     return await payment_service.create_payment(payment_data)
 
+@router.post(
+    "/advance",
+    response_model=ApiResponse[PaymentResponse]
+)
+async def add_advance_payment(
+    payment_data: PaymentCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    payment_service = PaymentService(db)
+
+    return await payment_service.add_advance_payment(payment_data)
+
 @router.get("/", response_model=ApiResponse[List[PaymentResponse]])
 async def get_payments(
     repair_id: Optional[UUID] = Query(None, description="Filter by repair ID"),
