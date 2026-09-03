@@ -5,12 +5,16 @@ from app.schemas.api_response import ApiResponse
 from app.schemas.payment import PaymentCreate, PaymentResponse
 from app.repositories.payment_repository import PaymentRepository
 from app.schemas.cash_cut import (CardDetail, CashCutMovement, CashCutResponse, PaymentSummary)
+from app.repositories.repair_repository import RepairRepository
+from decimal import Decimal
+from typing import cast
 
 class PaymentService:
     """Service layer for Payment operations"""
     def __init__(self, db: AsyncSession):
         self.db = db
         self.payment_repository = PaymentRepository(db)
+        self.repair_repository = RepairRepository(db)
 
     async def create_payment(self, payment_data: PaymentCreate) -> ApiResponse[PaymentResponse]:
         response = ApiResponse[PaymentResponse](
@@ -24,13 +28,64 @@ class PaymentService:
 
             payment = await self.payment_repository.create(payment_dict)
 
+            await self.db.commit()
+
             response.data = PaymentResponse.model_validate(payment)
         except Exception as e:
             await self.db.rollback()
             response.status = 500
             response.message = str(e)
             response.code = "PAYMENT_CREATION_ERROR"
-        
+        return response
+
+    async def add_advance_payment(self, payment_data: PaymentCreate) -> ApiResponse[PaymentResponse]:
+        response = ApiResponse[PaymentResponse](
+            status=200,
+            message="Advance payment created successfully",
+            code="SUCCESS",
+            data=None
+        )
+
+        try:
+            repair = await self.repair_repository.get_by_id_with_relations(
+                payment_data.repair_id
+            )
+
+            if not repair:
+                response.status = 404
+                response.message = "Repair not found"
+                response.code = "REPAIR_NOT_FOUND"
+                return response
+
+            advance_payment = cast(Decimal | None, repair.advance_payment)  
+
+            if advance_payment is not None and advance_payment > 0:
+                response.status = 400
+                response.message = "Repair already has an advance payment"
+                response.code = "ADVANCE_PAYMENT_ALREADY_EXISTS"
+                return response
+
+            payment_dict = payment_data.model_dump()
+            payment_dict["is_advance"] = True
+
+            payment = await self.payment_repository.create(payment_dict)
+
+            setattr(
+                repair,
+                "advance_payment",
+                Decimal(str(payment_data.amount))
+            )
+
+            await self.db.commit()
+
+            response.data = PaymentResponse.model_validate(payment)
+
+        except Exception as e:
+            await self.db.rollback()
+            response.status = 500
+            response.message = str(e)
+            response.code = "ADVANCE_PAYMENT_CREATION_ERROR"
+
         return response
 
     async def get_payments(self, filters: Optional[dict] = None) -> ApiResponse[List[PaymentResponse]]:

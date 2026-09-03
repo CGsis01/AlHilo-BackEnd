@@ -57,8 +57,6 @@ class PaymentRepository(BaseRepository[Payment]):
         
         payment_id = db_obj.id
 
-        await self.db.commit()
-
         result = await self.db.execute(
             self._query_with_relations().filter(Payment.id == payment_id))
 
