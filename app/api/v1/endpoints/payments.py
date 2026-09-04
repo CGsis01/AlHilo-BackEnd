@@ -22,16 +22,18 @@ async def create_payment(
 
 @router.post(
     "/advance",
-    response_model=ApiResponse[PaymentResponse]
+    response_model=ApiResponse[List[PaymentResponse]]
 )
 async def add_advance_payment(
-    payment_data: PaymentCreate,
+    payments_data: List[PaymentCreate],
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
     payment_service = PaymentService(db)
 
-    return await payment_service.add_advance_payment(payment_data)
+    return await payment_service.add_advance_payment(
+        payments_data
+    )
 
 @router.get("/", response_model=ApiResponse[List[PaymentResponse]])
 async def get_payments(

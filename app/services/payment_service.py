@@ -38,8 +38,12 @@ class PaymentService:
             response.code = "PAYMENT_CREATION_ERROR"
         return response
 
-    async def add_advance_payment(self, payment_data: PaymentCreate) -> ApiResponse[PaymentResponse]:
-        response = ApiResponse[PaymentResponse](
+    async def add_advance_payment(
+        self,
+        payments_data: List[PaymentCreate]
+    ) -> ApiResponse[List[PaymentResponse]]:
+
+        response = ApiResponse[List[PaymentResponse]](
             status=200,
             message="Advance payment created successfully",
             code="SUCCESS",
@@ -47,8 +51,22 @@ class PaymentService:
         )
 
         try:
+            if not payments_data:
+                response.status = 400
+                response.message = "At least one payment is required"
+                response.code = "PAYMENT_REQUIRED"
+                return response
+
+            repair_id = payments_data[0].repair_id
+
+            if any(payment.repair_id != repair_id for payment in payments_data):
+                response.status = 400
+                response.message = "All payments must belong to the same repair"
+                response.code = "INVALID_REPAIR_PAYMENTS"
+                return response
+
             repair = await self.repair_repository.get_by_id_with_relations(
-                payment_data.repair_id
+                repair_id
             )
 
             if not repair:
@@ -57,7 +75,10 @@ class PaymentService:
                 response.code = "REPAIR_NOT_FOUND"
                 return response
 
-            advance_payment = cast(Decimal | None, repair.advance_payment)  
+            advance_payment = cast(
+                Decimal | None,
+                repair.advance_payment
+            )
 
             if advance_payment is not None and advance_payment > 0:
                 response.status = 400
@@ -65,20 +86,44 @@ class PaymentService:
                 response.code = "ADVANCE_PAYMENT_ALREADY_EXISTS"
                 return response
 
-            payment_dict = payment_data.model_dump()
-            payment_dict["is_advance"] = True
+            if any(payment.amount <= 0 for payment in payments_data):
+                response.status = 400
+                response.message = "Payment amount must be greater than zero"
+                response.code = "INVALID_PAYMENT_AMOUNT"
+                return response
 
-            payment = await self.payment_repository.create(payment_dict)
+            total_advance = sum(
+                (
+                    Decimal(str(payment.amount))
+                    for payment in payments_data
+                ),
+                Decimal("0")
+            )
+
+            created_payments = []
+
+            for payment_data in payments_data:
+                payment_dict = payment_data.model_dump()
+                payment_dict["is_advance"] = True
+
+                payment = await self.payment_repository.create(
+                    payment_dict
+                )
+
+                created_payments.append(payment)
 
             setattr(
                 repair,
                 "advance_payment",
-                Decimal(str(payment_data.amount))
+                total_advance
             )
 
             await self.db.commit()
 
-            response.data = PaymentResponse.model_validate(payment)
+            response.data = [
+                PaymentResponse.model_validate(payment)
+                for payment in created_payments
+            ]
 
         except Exception as e:
             await self.db.rollback()
