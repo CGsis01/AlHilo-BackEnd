@@ -83,6 +83,17 @@ async def update_repair_item(
         repair_item_data
     )
 
+@router.delete("/{repair_id}/items/{repair_item_id}",response_model=ApiResponse[bool])
+async def delete_repair_item(
+    repair_id: UUID,
+    repair_item_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):  
+    repair_service = RepairService(db)
+
+    return await repair_service.delete_repair_item(repair_id, repair_item_id, current_user)
+
 @router.post("/{repair_id}/assign-garments", response_model=ApiResponse[RepairResponse])
 async def assign_repair_garments(
     repair_id: UUID,
