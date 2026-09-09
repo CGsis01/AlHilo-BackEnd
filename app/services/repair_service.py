@@ -6,6 +6,7 @@ from uuid import UUID
 from app.models.repair_item import RepairItem
 from app.models.repair_item_repair_type import RepairItemRepairType
 from app.models.repair_status import RepairStatus
+from app.models.user import User
 from app.repositories.repair_repository import RepairRepository
 from app.repositories.repair_item_repository import RepairItemRepository
 from app.schemas.api_response import ApiResponse
@@ -438,6 +439,41 @@ class RepairService:
 
         return response
 
+    async def delete_repair_item(self, repair_id: UUID, repair_item_id: UUID, current_user: User) -> ApiResponse[bool]:
+        response = ApiResponse[bool](
+            status=200,
+            message="Repair item deleted successfully",
+            code="SUCCESS",
+            data=None
+        )
+
+        if current_user.role.code not in ["Administrator", "Receptionist"]:
+                return ApiResponse(
+                    status=status.HTTP_403_FORBIDDEN,
+                    message="No tienes permisos para eliminar un servicio de reparación.",
+                    code= "FORBIDDEN",
+                    data=False
+                    )
+        
+        repair_item = await self.repair_item_repository.get_by_id_with_relations(repair_item_id)
+
+        if not repair_item:
+            response.status = status.HTTP_404_NOT_FOUND
+            response.message = "Repair item not found"
+            response.code = "REPAIR_ITEM_NOT_FOUND"
+            response.data = False
+            return response
+
+        if cast(UUID, repair_item.repair_id) != repair_id:
+            response.status = status.HTTP_404_NOT_FOUND
+            response.message = "Repair item not found"
+            response.code = "REPAIR_ITEM_NOT_FOUND"
+            response.data = False
+            return response
+        deleted = await self.repair_item_repository.delete(repair_item_id)
+        response.data = deleted
+
+        return response
 
     async def assign_repair_items(self, repair_id: UUID, assign_garments_data: AssignRepairGarments) -> ApiResponse[RepairResponse]:
         response = ApiResponse[RepairResponse](
