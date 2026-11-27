@@ -1,12 +1,13 @@
 from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, or_, and_
+from sqlalchemy import and_, or_, select, true
 from uuid import UUID
 from sqlalchemy.orm import selectinload
 from app.models.user import User
 from app.models.role import Role
 from app.models.store import Store
 from app.models.repair_item import RepairItem
+from app.models.repair_status import RepairStatus
 from app.repositories.base import BaseRepository
 from app.schemas.user import UserFilters
 
@@ -95,12 +96,48 @@ class UserRepository(BaseRepository[User]):
         return list(result.scalars().all())
 
     async def get_unassigned_seamstresses_and_headsewing(self) -> List[User]:
-        query = (select(User)
-                 .join(Role, User.role_id == Role.id)
-                 .outerjoin(RepairItem, User.id == RepairItem.assigned_to_id)
-                 .where(Role.code.in_(['Seamstress', 'HeadSewing']))
-                 .where(User.is_active == True)
-                 .where(RepairItem.id == None))
+        validated_status_result = await self.db.execute(
+            select(RepairStatus.repair_status_id).where(RepairStatus.name == "Validada")
+        )
+        validated_status_id = validated_status_result.scalar_one_or_none()
+
+        delivered_status_result = await self.db.execute(
+            select(RepairStatus.repair_status_id).where(RepairStatus.name == "Entregada")
+        )
+        delivered_status_id = delivered_status_result.scalar_one_or_none()
+
+        released_status_ids = [
+            status_id
+            for status_id in (validated_status_id, delivered_status_id)
+            if status_id is not None
+        ]
+
+        active_assignment_condition = (
+            or_(
+                RepairItem.repair_status_id.is_(None),
+                RepairItem.repair_status_id.not_in(released_status_ids),
+            )
+            if released_status_ids
+            else true()
+        )
+
+        query = (
+            select(User)
+            .join(Role, User.role_id == Role.id)
+            .outerjoin(
+                RepairItem,
+                and_(
+                    or_(
+                        User.id == RepairItem.assigned_to_id,
+                        User.id == RepairItem.attended_by_id,
+                    ),
+                    active_assignment_condition,
+                ),
+            )
+            .where(Role.code.in_(['Seamstress', 'HeadSewing']))
+            .where(User.is_active == True)
+            .where(RepairItem.id == None)
+        )
         
         result = await self.db.execute(query)
         

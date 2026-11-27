@@ -1,6 +1,6 @@
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import joinedload, selectinload
 from uuid import UUID
 from app.models.repair import Repair
@@ -43,7 +43,13 @@ class RepairRepository(BaseRepository[Repair]):
                 assigned_to_uuid = assigned_to_id if isinstance(assigned_to_id, UUID) else UUID(str(assigned_to_id))
                 
                 query = query.filter(
-                    Repair.repair_items.any(RepairItem.assigned_to_id == assigned_to_uuid))
+                    Repair.repair_items.any(
+                        or_(
+                            RepairItem.assigned_to_id == assigned_to_uuid,
+                            RepairItem.attended_by_id == assigned_to_uuid,
+                        )
+                    )
+                )
 
             for field, value in filters.items():
                 if value is None or field == "assigned_to_id":
