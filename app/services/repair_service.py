@@ -494,8 +494,15 @@ class RepairService:
             # Create a dictionary of repair_item_id -> assigned_to_id for bulk assignment
             assignments = {}
             for assignment in assign_garments_data.assignments:
-                assignments[assignment.repair_item_id] = assignment.assigned_to_id
-                assignments[assignment.repair_item_id] = assignment.attended_by_id  
+                assignment_data = {}
+
+                if "assigned_to_id" in assignment.model_fields_set:
+                    assignment_data["assigned_to_id"] = assignment.assigned_to_id
+
+                if "attended_by_id" in assignment.model_fields_set:
+                    assignment_data["attended_by_id"] = assignment.attended_by_id
+
+                assignments[assignment.repair_item_id] = assignment_data
             
             # Perform bulk assignment
             await self.repair_item_repository.assign_bulk(assignments)
@@ -513,7 +520,13 @@ class RepairService:
                 repair=synced_repair,
                 updated_by=assign_garments_data.updated_by,
             )
+        except ValueError as e:
+            await self.db.rollback()
+            response.status = status.HTTP_400_BAD_REQUEST
+            response.message = str(e)
+            response.code = "INVALID_REPAIR_ITEM_ASSIGNMENT"
         except Exception as e:
+            await self.db.rollback()
             response.status = 500
             response.message = str(e)
             response.code = "REPAIR_ITEM_ASSIGNMENT_ERROR"
@@ -528,7 +541,11 @@ class RepairService:
             data=None)
 
         try:
-            item = await self.repair_item_repository.assign(repair_item_id, assignment_data.assigned_to_id)
+            item = await self.repair_item_repository.assign(
+                repair_item_id,
+                assignment_data.assigned_to_id,
+                assignment_data.attended_by_id,
+            )
             if not item:
                 response.status = status.HTTP_404_NOT_FOUND
                 response.message = "Repair item not found"
@@ -546,7 +563,13 @@ class RepairService:
                 )
 
             response.data = RepairItemResponse.model_validate(item)
+        except ValueError as e:
+            await self.db.rollback()
+            response.status = status.HTTP_400_BAD_REQUEST
+            response.message = str(e)
+            response.code = "INVALID_REPAIR_ITEM_ASSIGNMENT"
         except Exception as e:
+            await self.db.rollback()
             response.status = 500
             response.message = str(e)
             response.code = "REPAIR_ITEM_ASSIGNMENT_ERROR"
@@ -590,9 +613,20 @@ class RepairService:
 
             updated_repair = await self.repair_repository.update(repair_id, update_dict)
 
+            status_name_result = await self.db.execute(
+                select(RepairStatus.name).filter(
+                    RepairStatus.repair_status_id == update_status_data.repair_status_id
+                )
+            )
+            target_status_name = status_name_result.scalar_one_or_none()
+
             if(updated_repair and updated_repair.repair_items):
                 for item in updated_repair.repair_items:
                     item.repair_status_id = update_status_data.repair_status_id
+
+                    if target_status_name == "Validada":
+                        item.assigned_to_id = None
+                        item.attended_by_id = None
 
             await self.db.commit()
             updated_repair = await self.repair_repository.get_by_id_with_relations(repair_id)
