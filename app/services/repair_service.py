@@ -624,7 +624,7 @@ class RepairService:
                 for item in updated_repair.repair_items:
                     item.repair_status_id = update_status_data.repair_status_id
 
-                    if target_status_name == "Validada":
+                    if target_status_name in ("Pendiente", "Validada"):
                         item.assigned_to_id = None
                         item.attended_by_id = None
 

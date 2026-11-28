@@ -54,6 +54,7 @@ class RepairItemRepository(BaseRepository[RepairItem]):
         return list(result.scalars().unique().all())
 
     async def _is_seamstress_assigned_elsewhere(self, seamstress_id: UUID, repair_item_id: UUID) -> bool:
+        pending_status_id = await self._get_status_id_by_name("Pendiente")
         validated_status_id = await self._get_status_id_by_name("Validada")
         delivered_status_id = await self._get_status_id_by_name("Entregada")
 
@@ -67,7 +68,7 @@ class RepairItemRepository(BaseRepository[RepairItem]):
 
         released_status_ids = [
             status_id
-            for status_id in (validated_status_id, delivered_status_id)
+            for status_id in (pending_status_id, validated_status_id, delivered_status_id)
             if status_id is not None
         ]
 
@@ -104,19 +105,33 @@ class RepairItemRepository(BaseRepository[RepairItem]):
         ):
             raise ValueError("No puedes asignar la misma costurera como principal y secundaria.")
 
+        # Allow completing the pair (adding secondary) while preserving the same primary.
+        is_only_adding_secondary = (
+            current_primary_id is not None
+            and current_secondary_id is None
+            and requested_primary_id == current_primary_id
+            and requested_secondary_id is not None
+        )
+
         validated_status_id = await self._get_status_id_by_name("Validada")
+        pending_status_id = await self._get_status_id_by_name("Pendiente")
         is_validated = (
             validated_status_id is not None
             and getattr(db_obj, "repair_status_id", None) == validated_status_id
+        )
+        is_pending = (
+            pending_status_id is not None
+            and getattr(db_obj, "repair_status_id", None) == pending_status_id
         )
 
         if (
             (current_primary_id is not None or current_secondary_id is not None)
             and (requested_primary_id != current_primary_id or requested_secondary_id != current_secondary_id)
-            and not is_validated
+            and not (is_validated or is_pending)
+            and not is_only_adding_secondary
         ):
             raise ValueError(
-                "No se pueden cambiar o desasignar costureras hasta que la prenda este en estatus Validada."
+                "No se pueden cambiar o desasignar costureras hasta que la prenda este en estatus Pendiente o Validada."
             )
 
         requested_ids = [
@@ -127,7 +142,7 @@ class RepairItemRepository(BaseRepository[RepairItem]):
             if await self._is_seamstress_assigned_elsewhere(seamstress_id, cast(UUID, db_obj.id)):
                 raise ValueError(
                     "La costurera seleccionada ya esta asignada a otra prenda. "
-                    "Se liberara cuando esa prenda pase a Validada."
+                    "Se liberara cuando esa prenda pase a Pendiente o Validada."
                 )
 
     async def assign(
@@ -239,7 +254,7 @@ class RepairItemRepository(BaseRepository[RepairItem]):
 
             setattr(db_obj, 'repair_status_id', repair_status_id)
             
-            if target_status_name == "Validada":
+            if target_status_name in ("Pendiente", "Validada"):
                 setattr(db_obj, 'assigned_to_id', None)
                 setattr(db_obj, 'attended_by_id', None)
             

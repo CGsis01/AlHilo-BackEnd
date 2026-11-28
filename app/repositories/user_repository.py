@@ -96,6 +96,11 @@ class UserRepository(BaseRepository[User]):
         return list(result.scalars().all())
 
     async def get_unassigned_seamstresses_and_headsewing(self) -> List[User]:
+        pending_status_result = await self.db.execute(
+            select(RepairStatus.repair_status_id).where(RepairStatus.name == "Pendiente")
+        )
+        pending_status_id = pending_status_result.scalar_one_or_none()
+
         validated_status_result = await self.db.execute(
             select(RepairStatus.repair_status_id).where(RepairStatus.name == "Validada")
         )
@@ -108,7 +113,7 @@ class UserRepository(BaseRepository[User]):
 
         released_status_ids = [
             status_id
-            for status_id in (validated_status_id, delivered_status_id)
+            for status_id in (pending_status_id, validated_status_id, delivered_status_id)
             if status_id is not None
         ]
 
